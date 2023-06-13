@@ -1,0 +1,30 @@
+Notepad:
+
+-- 13-06 --
+
+In order to make nnUNetv2 work with E2CNNs (& B-CNNs), we should first (i) reimplement a dynamic_network_architecture.
+
+After that, we can (ii) reimplement an Experiment_planner that will call this new architecture. It will requires to implement a VRAM consumption estimation.
+
+***
+(i) Dynamic Network Architecture
+***
+
+The dynamic_network_architecture library for UNet is built with the following structure:
+
+	Call to unet.py with the architecture parameters
+(input_channels, n-stages, features_per_stages, conv_op (1d, 2d or 3d), etc.)
+				|
+				| This UNet is made of an Encoder (plain_conv_encoder.py) and Decoder (unet_decoder.py).
+				|
+				|___ PlainConvEncoder ___ call StackedConvBlocks from simple_conv_blocks to generate a "stage" in the encoder (Pooling + Conv)
+				|								|
+				|								|
+				|								|___ Generate a Sequential model with the proper sub layers (Conv, activation, normalization, etc.)
+				|								     (Each conv layer in the Sequence should be able to compute the feature map size)
+				|
+				|
+				|___ UNetDecoder ___ also call StackedConvBlocks after upsampling the input (to implement skipping layers)
+
+All this is also making more "dynamic" thanks to the helper.py utility that maps
+   the input_dim with the proper operation (conv2d?, conv3d?, bach3d?, etc).
