@@ -2,7 +2,7 @@ from typing import Type
 import numpy as np
 
 from e2cnn import nn
-from e2cnn.nn.equivariant_module import EquivariantModule 
+from e2cnn.nn import EquivariantModule 
 
 
 def convert_dim_to_conv_op(dimension: int) -> Type[EquivariantModule]:
@@ -10,14 +10,14 @@ def convert_dim_to_conv_op(dimension: int) -> Type[EquivariantModule]:
         return nn.R2Conv
     else:
         raise ValueError('Equivariant models are just compatible with 2D images')
-    
+
 
 def convert_conv_op_to_dim(conv_op: Type[EquivariantModule]):
     if conv_op == nn.R2Conv:
         return 2
     else:
         raise ValueError('Equivariant models are just compatible with 2D images')
-    
+
 
 def get_matching_pool_op(conv_op: Type[EquivariantModule] = None,
                          dimension: int = None,
@@ -43,7 +43,7 @@ def get_matching_pool_op(conv_op: Type[EquivariantModule] = None,
             return nn.PointwiseAdaptiveMaxPool
         else:
             return nn.PointwiseMaxPoolAntialiased
-        
+
 
 def get_matching_instancenorm(conv_op: Type[EquivariantModule] = None,
                               dimension: int = None) -> Type[EquivariantModule]:
@@ -125,7 +125,7 @@ def get_default_network_config(dimension: int = 2,
 
     if nonlin == "LeakyReLU":
         config['nonlin'] = nn.ELU
-        config['nonlin_kwargs'] = {'float': 0.1, 'inplace': True}
+        config['nonlin_kwargs'] = {'alpha': 0.1, 'inplace': True}
     elif nonlin == "ReLU":
         config['nonlin'] = nn.ReLU
         config['nonlin_kwargs'] = {'inplace': True}
@@ -133,3 +133,18 @@ def get_default_network_config(dimension: int = 2,
         raise NotImplementedError('Unknown nonlin %s. Only "LeakyReLU" and "ReLU" are supported for now' % nonlin)
 
     return config
+
+
+if __name__ == "__main__":
+
+    # Test
+
+    print("Convert dim to conv:", convert_dim_to_conv_op(2))
+    print("Convert conv to dim:", convert_conv_op_to_dim(nn.R2Conv))
+    print("Get matching pool op avg", get_matching_pool_op(dimension=2, pool_type='avg'))
+    print("Get matching pool op max", get_matching_pool_op(dimension=2, pool_type='max'))
+    print("Get matching bn", get_matching_batchnorm(dimension=2))
+    print("Get matching ConvTransp", get_matching_convtransp(dimension=2))
+    print("Get matching dropout", get_matching_dropout(dimension=2))
+    print("Get network config", get_default_network_config(dimension=2, nonlin="LeakyReLU", norm_type="bn"))
+
