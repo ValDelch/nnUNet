@@ -37,12 +37,12 @@ def get_matching_pool_op(conv_op: Type[EquivariantModule] = None,
         if adaptative:
             return nn.PointwiseAdaptiveAvgPool
         else:
-            return nn.PointwiseAvgPoolAntialiased
+            return nn.PointwiseAvgPool
     elif pool_type == 'max':
         if adaptative:
             return nn.PointwiseAdaptiveMaxPool
         else:
-            return nn.PointwiseMaxPoolAntialiased
+            return nn.PointwiseMaxPool
 
 
 def get_matching_instancenorm(conv_op: Type[EquivariantModule] = None,

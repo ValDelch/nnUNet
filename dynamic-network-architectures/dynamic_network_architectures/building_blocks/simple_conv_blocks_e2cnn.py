@@ -11,10 +11,10 @@ from dynamic_network_architectures.building_blocks.helper_e2cnn import maybe_con
 
 class ConvertToTensor(e2_nn.EquivariantModule):
     def __init__(self,
-                 out_type: Type[e2_nn.FieldType]):
+                 in_type: Type[e2_nn.FieldType]):
         super(ConvertToTensor, self).__init__()
-        self.out_type = out_type
-        self.gpool = e2_nn.GroupPooling(out_type)
+        self.out_type = in_type
+        self.gpool = e2_nn.GroupPooling(in_type)
 
     def forward(self, x):
         x = self.gpool(x)
@@ -111,7 +111,6 @@ class StackedConvBlocks(e2_nn.EquivariantModule):
                  num_convs: int,
                  conv_op: Type[e2_nn.EquivariantModule],
                  in_type: Type[e2_nn.FieldType],
-                 gspace: Type[GeneralOnR2],
                  input_channels: int,
                  output_channels: Union[int, List[int], Tuple[int, ...]],
                  kernel_size: Union[int, List[int], Tuple[int, ...]],
@@ -129,6 +128,9 @@ class StackedConvBlocks(e2_nn.EquivariantModule):
 
         if not isinstance(output_channels, (list, tuple)):
             output_channels = num_convs * [output_channels]
+
+        gspace = in_type.gspace
+        self.gspace = gspace
 
         self.convs = torch_nn.Sequential(
             ConvDropoutNormReLU(
@@ -169,6 +171,7 @@ class StackedConvBlocks(e2_nn.EquivariantModule):
         )
 
         self.output_channels = output_channels[-1]
+        self.out_type = self.convs[-1].out_type
         self.initial_stride = maybe_convert_scalar_to_list(conv_op, initial_stride)
 
     def forward(self, x):
@@ -203,7 +206,6 @@ if __name__ == '__main__':
         num_convs=2,
         conv_op=e2_nn.R2Conv,
         in_type=in_type,
-        gspace=r2_act,
         input_channels=input_channels,
         output_channels=16,
         kernel_size=5,
@@ -238,7 +240,7 @@ if __name__ == '__main__':
 
     model = torch_nn.Sequential(
         model,
-        ConvertToTensor(out_type=model[-1].out_type)
+        ConvertToTensor(in_type=model[-1].out_type)
     )
 
     print(model(data).shape)
