@@ -50,7 +50,7 @@ class ConvDropoutNormReLU(e2_nn.EquivariantModule):
         stride = maybe_convert_scalar_to_list(conv_op, initial_stride)
         self.stride = stride
 
-        if type(kernel_size) is tuple:
+        if (type(kernel_size) is tuple) or (type(kernel_size) is list):
             kernel_size = kernel_size[0]
         if norm_op_kwargs is None:
             norm_op_kwargs = {}

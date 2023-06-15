@@ -112,4 +112,5 @@ equinnUNetEnv/
 *.jpeg
 
 *.model
+set_env_var.bat
 

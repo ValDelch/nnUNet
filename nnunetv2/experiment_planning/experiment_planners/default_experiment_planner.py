@@ -291,6 +291,9 @@ class ExperimentPlanner(object):
                     (self.UNet_vram_target_GB / self.UNet_reference_val_corresp_GB)
 
         while estimate > reference:
+
+            print("\t >> Reducing model overall size")
+
             # print(patch_size)
             # patch size seems to be too large, so we need to reduce it. Reduce the axis that currently violates the
             # aspect ratio the most (that is the largest relative to median shape)
@@ -562,24 +565,24 @@ class ExperimentPlannerE2CNN(object):
 
         self.anisotropy_threshold = ANISO_THRESHOLD
 
-        self.UNet_base_num_features = 16
+        self.UNet_base_num_features = 8
         self.UNet_class = PlainConvUNet_e2cnn
-        self.gspace = gspaces.Rot2dOnR2(N=8)
-        self.order = 8
+        self.gspace = gspaces.Rot2dOnR2(N=4)
+        self.order = 4
         # the following two numbers are really arbitrary and were set to reproduce nnU-Net v1's configurations as
         # much as possible
         self.UNet_reference_val_3d = 560000000  # 455600128  550000000
-        self.UNet_reference_val_2d = 85000000  # 83252480
+        self.UNet_reference_val_2d = 85000000*2  # 83252480
         self.UNet_reference_com_nfeatures = 32
         self.UNet_reference_val_corresp_GB = 8
         self.UNet_reference_val_corresp_bs_2d = 12
         self.UNet_reference_val_corresp_bs_3d = 2
         self.UNet_vram_target_GB = gpu_memory_target_in_gb
         self.UNet_featuremap_min_edge_length = 4
-        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
-        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2)
         self.UNet_min_batch_size = 2
-        self.UNet_max_features_2d = 512
+        self.UNet_max_features_2d = 128
         self.UNet_max_features_3d = 320
 
         self.lowres_creation_threshold = 0.25  # if the patch size of fullres is less than 25% of the voxels in the
@@ -787,9 +790,9 @@ class ExperimentPlannerE2CNN(object):
 
         # now estimate vram consumption
         num_stages = len(pool_op_kernel_sizes)
-        estimate = self.static_estimate_VRAM_usage(self.gspace,
+        estimate = self.static_estimate_VRAM_usage(tuple(patch_size),
+                                                   self.gspace,
                                                    self.order,
-                                                   tuple(patch_size),
                                                    num_stages,
                                                    tuple([tuple(i) for i in pool_op_kernel_sizes]),
                                                    self.UNet_class,
@@ -810,6 +813,9 @@ class ExperimentPlannerE2CNN(object):
                     (self.UNet_vram_target_GB / self.UNet_reference_val_corresp_GB)
 
         while estimate > reference:
+
+            print("\t >> Reducing model overall size", estimate, reference)
+
             # print(patch_size)
             # patch size seems to be too large, so we need to reduce it. Reduce the axis that currently violates the
             # aspect ratio the most (that is the largest relative to median shape)
@@ -836,9 +842,9 @@ class ExperimentPlannerE2CNN(object):
                                                                  999999)
 
             num_stages = len(pool_op_kernel_sizes)
-            estimate = self.static_estimate_VRAM_usage(self.gspace,
+            estimate = self.static_estimate_VRAM_usage(tuple(patch_size),
+                                                       self.gspace,
                                                        self.order,
-                                                       tuple(patch_size),
                                                        num_stages,
                                                        tuple([tuple(i) for i in pool_op_kernel_sizes]),
                                                        self.UNet_class,
