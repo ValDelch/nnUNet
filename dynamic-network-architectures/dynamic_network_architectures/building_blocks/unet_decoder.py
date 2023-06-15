@@ -125,3 +125,36 @@ class UNetDecoder(nn.Module):
             if self.deep_supervision or (s == (len(self.stages) - 1)):
                 output += np.prod([self.num_classes, *skip_sizes[-(s+1)]], dtype=np.int64)
         return output
+    
+
+if __name__ == '__main__':
+
+    input_channels = 3
+    data = torch.rand(1, input_channels, 256, 128)
+
+    model = PlainConvEncoder(
+        input_channels=input_channels,
+        n_stages=4,
+        features_per_stage=16,
+        conv_op=nn.Conv2d,
+        kernel_sizes=5,
+        strides=2,
+        n_conv_per_stage=2,
+        conv_bias=True,
+        norm_op=nn.BatchNorm2d,
+        norm_op_kwargs=None,
+        nonlin=nn.ReLU,
+        nonlin_kwargs={'inplace': True},
+        return_skips=True,
+        pool='conv'
+    )
+
+    decoder = UNetDecoder(
+        encoder=model,
+        num_classes=2,
+        n_conv_per_stage=2,
+        deep_supervision=True
+    )
+
+    print([type(x) for x in decoder(model(data))])
+    print([x.shape for x in decoder(model(data))])

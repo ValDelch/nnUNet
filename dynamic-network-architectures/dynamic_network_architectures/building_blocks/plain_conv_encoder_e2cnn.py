@@ -124,7 +124,7 @@ if __name__ == '__main__':
 
     # Test
     input_channels = 3
-    data = torch.rand(1, input_channels, 64, 128)
+    data = torch.rand(1, input_channels, 256, 128)
 
     r2_act = gspaces.Rot2dOnR2(N=4)
     in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])

@@ -103,3 +103,28 @@ class PlainConvEncoder(nn.Module):
         return output
 
 
+if __name__ == '__main__':
+
+    input_channels = 3
+    data = torch.rand(1, input_channels, 256, 128)
+
+    model = PlainConvEncoder(
+        input_channels=input_channels,
+        n_stages=4,
+        features_per_stage=16,
+        conv_op=nn.Conv2d,
+        kernel_sizes=5,
+        strides=2,
+        n_conv_per_stage=2,
+        conv_bias=True,
+        norm_op=nn.BatchNorm2d,
+        norm_op_kwargs=None,
+        nonlin=nn.ReLU,
+        nonlin_kwargs={'inplace': True},
+        return_skips=True,
+        pool='conv'
+    )
+
+    print([x.shape for x in model(data)])
+    print([type(x) for x in model(data)])
+    print(model.compute_conv_feature_map_size((64, 128)))

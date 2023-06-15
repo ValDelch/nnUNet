@@ -35,7 +35,6 @@ class UNetDecoder(e2_nn.EquivariantModule):
             in_type_below = encoder.out_types[-s]
             input_features_skip = encoder.output_channels[-(s + 1)]
             stride_for_transpconv = encoder.strides[-s]
-
             transpconvs.append(
                 torch_nn.Sequential(
                     transpconv_op(
@@ -147,3 +146,54 @@ class UNetDecoder(e2_nn.EquivariantModule):
 
     def evaluate_output_shape(self, input_shape: Tuple[int, ...]) -> Tuple[int, ...]:
         pass
+
+
+if __name__ == '__main__':
+
+    from e2cnn import gspaces
+
+    # Test
+    input_channels = 3
+    data = torch.rand(1, input_channels, 256, 128)
+
+    r2_act = gspaces.Rot2dOnR2(N=4)
+    in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
+
+    model = PlainConvEncoder(
+        gspace=r2_act,
+        input_channels=input_channels,
+        n_stages=4,
+        features_per_stage=16,
+        conv_op=e2_nn.R2Conv,
+        kernel_sizes=5,
+        strides=2,
+        n_conv_per_stage=2,
+        conv_bias=True,
+        norm_op=e2_nn.InnerBatchNorm,
+        norm_op_kwargs=None,
+        dropout_op=e2_nn.PointwiseDropout,
+        dropout_op_kwargs={'p': 0.1},
+        nonlin=e2_nn.ELU,
+        nonlin_kwargs={'alpha': 0.1, 'inplace': True},
+        return_skips=True,
+        pool='conv'
+    )
+
+    """
+    output will be of shape:
+
+    [torch.Size([1, 64, 128, 64]), 
+    torch.Size([1, 64, 64, 32]), 
+    torch.Size([1, 64, 32, 16]), 
+    torch.Size([1, 64, 16, 8])]
+    """
+
+    decoder = UNetDecoder(
+        encoder=model,
+        num_classes=2,
+        n_conv_per_stage=2,
+        deep_supervision=True
+    )
+
+    print([type(x) for x in decoder(model(data))])
+    print([x.shape for x in decoder(model(data))])
