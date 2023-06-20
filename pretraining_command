@@ -1,0 +1,23 @@
+# >> Preparing for pretraining
+
+# New
+nnUNetv2_extract_fingerprint -d 4
+nnUNetv2_extract_fingerprint -d 3
+nnUNetv2_plan_experiment -d 4 -pl ExperimentPlannerE2CNN -gpu_memory_target 16
+nnUNetv2_plan_experiment -d 3 -pl ExperimentPlannerE2CNN -gpu_memory_target 16
+nnUNetv2_preprocess -d 4 -plans_name nnUNetPlansE2CNN
+nnUNetv2_move_plans_between_datasets -s 4 -t 3 -sp nnUNetPlansE2CNN -tp nnUNetPlansE2CNN_pretraining
+nnUNetv2_preprocess -d 3 -plans_name nnUNetPlansE2CNN_pretraining
+
+# Old
+nnUNetv2_plan_and_preprocess -d 4
+nnUNetv2_plan_and_preprocess -d 3
+nnUNetv2_extract_fingerprint -d 3
+nnUNetv2_move_plans_between_datasets -s 4 -t 3 -sp nnUNetPlans -tp nnUNetPlans_pretraining
+nnUNetv2_preprocess -d 3 -plans_name nnUNetPlans_pretraining
+
+# >> Preparing for simple training
+
+nnUNetv2_extract_fingerprint -d 4
+nnUNetv2_plan_experiment -d 4 -pl ExperimentPlannerE2CNN -gpu_memory_target 16
+nnUNetv2_preprocess -d 4 -plans_name nnUNetPlansE2CNN

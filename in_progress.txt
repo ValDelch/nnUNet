@@ -28,3 +28,7 @@ The dynamic_network_architecture library for UNet is built with the following st
 
 All this is also making more "dynamic" thanks to the helper.py utility that maps
    the input_dim with the proper operation (conv2d?, conv3d?, bach3d?, etc).
+
+-- 20-06 --
+
+pip install git+https://github.com/ValDelch/B_CNNs.git@torch-package
