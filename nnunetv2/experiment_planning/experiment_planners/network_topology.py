@@ -160,7 +160,7 @@ def get_pool_and_conv_props_e2cnn(spacing, patch_size, min_feature_map_size, max
                 if spacings_of_axes[d] / min(current_spacing) < 2:
                     kernel_size[d] = 3
         # For E2CNN, we always use 5x5 conv
-        kernel_size = [5]*dim
+        kernel_size = [7]*dim
 
         other_axes = [i for i in range(dim) if i not in valid_axes_for_pool]
 
