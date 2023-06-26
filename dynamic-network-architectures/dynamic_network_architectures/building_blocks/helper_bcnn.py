@@ -185,6 +185,9 @@ def get_default_network_config(dimension: int = 2,
     elif nonlin == "Softsign":
         config['nonlin'] = nn.Softsign
         config['nonlin_kwargs'] = {}
+    elif nonlin == "Tanh":
+        config['nonlin'] = nn.Tanh
+        config['nonlin_kwargs'] = {}
     else:
         raise NotImplementedError('Unknown nonlin %s. Only "LeakyReLU", "ReLU" and Softsign are supported for now' % nonlin)
 

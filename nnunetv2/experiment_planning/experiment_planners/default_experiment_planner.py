@@ -1155,7 +1155,7 @@ class ExperimentPlannerBCNN(object):
         """
         dim = len(patch_size)
         conv_op = convert_dim_to_conv_op_bcnn(dim)
-        norm_op = get_matching_batchnorm_bcnn(conv_op)
+        norm_op = get_matching_instancenorm_bcnn(conv_op)
         net = UNet_class(num_input_channels, 
                          n_stages,
                          features_per_stage,
