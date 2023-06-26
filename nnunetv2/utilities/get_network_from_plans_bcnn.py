@@ -1,5 +1,5 @@
 from dynamic_network_architectures.architectures.unet_bcnn import PlainConvUNet
-from dynamic_network_architectures.building_blocks.helper_bcnn import get_matching_instancenorm, convert_dim_to_conv_op
+from dynamic_network_architectures.building_blocks.helper_bcnn import get_matching_instancenorm, convert_dim_to_conv_op, get_matching_batchnorm
 from nnunetv2.utilities.plans_handling.plans_handler import ConfigurationManager, PlansManager
 from torch import nn
 
@@ -28,7 +28,7 @@ def get_network_from_plans(plans_manager: PlansManager,
     }
     kwargs = {
         'PlainConvUNet': {
-            'norm_op': get_matching_instancenorm(conv_op),
+            'norm_op': get_matching_batchnorm(conv_op),
             'norm_op_kwargs': {'eps': 1e-5, 'affine': True},
             'dropout_op': None, 'dropout_op_kwargs': None,
             'nonlin': nn.LeakyReLU, 'nonlin_kwargs': {'inplace': True},

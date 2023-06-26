@@ -20,6 +20,7 @@ from BesselConv.BesselConv2d import BesselConv2d
 from dynamic_network_architectures.architectures.unet_bcnn import PlainConvUNet as PlainConvUNet_bcnn
 from dynamic_network_architectures.building_blocks.helper_bcnn import convert_dim_to_conv_op as convert_dim_to_conv_op_bcnn
 from dynamic_network_architectures.building_blocks.helper_bcnn import get_matching_instancenorm as get_matching_instancenorm_bcnn
+from dynamic_network_architectures.building_blocks.helper_bcnn import get_matching_batchnorm as get_matching_batchnorm_bcnn
 
 from nnunetv2.configuration import ANISO_THRESHOLD
 from nnunetv2.experiment_planning.experiment_planners.network_topology import get_pool_and_conv_props
@@ -585,8 +586,8 @@ class ExperimentPlannerE2CNN(object):
         self.UNet_reference_val_corresp_bs_3d = 2
         self.UNet_vram_target_GB = gpu_memory_target_in_gb
         self.UNet_featuremap_min_edge_length = 4
-        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2, 2)
-        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2, 2, 2)
         self.UNet_min_batch_size = 2
         self.UNet_max_features_2d = 128
         self.UNet_max_features_3d = 320
@@ -1095,7 +1096,7 @@ class ExperimentPlannerBCNN(object):
 
         self.anisotropy_threshold = ANISO_THRESHOLD
 
-        self.UNet_base_num_features = 16
+        self.UNet_base_num_features = 8
         self.UNet_class = PlainConvUNet_bcnn
         self.reflex_inv = False
         self.scale_inv = False
@@ -1109,10 +1110,10 @@ class ExperimentPlannerBCNN(object):
         self.UNet_reference_val_corresp_bs_3d = 2
         self.UNet_vram_target_GB = gpu_memory_target_in_gb
         self.UNet_featuremap_min_edge_length = 4
-        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2, 2)
-        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2, 2, 2)
         self.UNet_min_batch_size = 2
-        self.UNet_max_features_2d = 256
+        self.UNet_max_features_2d = 128
         self.UNet_max_features_3d = 320
 
         self.lowres_creation_threshold = 0.25  # if the patch size of fullres is less than 25% of the voxels in the
@@ -1154,7 +1155,7 @@ class ExperimentPlannerBCNN(object):
         """
         dim = len(patch_size)
         conv_op = convert_dim_to_conv_op_bcnn(dim)
-        norm_op = get_matching_instancenorm_bcnn(conv_op)
+        norm_op = get_matching_batchnorm_bcnn(conv_op)
         net = UNet_class(num_input_channels, 
                          n_stages,
                          features_per_stage,
