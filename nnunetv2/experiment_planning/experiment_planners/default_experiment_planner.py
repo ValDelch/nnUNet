@@ -1469,7 +1469,12 @@ class ExperimentPlannerBCNN(object):
         approximate_n_voxels_dataset = float(np.prod(new_median_shape_transposed, dtype=np.float64) *
                                              self.dataset_json['numTraining'])
         # only run 3d if this is a 3d dataset
-        if new_median_shape_transposed[0] != 1:
+
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # SKIPPING 3D DATASET FOR THE MOMENT
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        
+        if False:#new_median_shape_transposed[0] != 1:
             plan_3d_fullres = self.get_plans_for_configuration(fullres_spacing_transposed,
                                                                new_median_shape_transposed,
                                                                self.generate_data_identifier('3d_fullres'),
