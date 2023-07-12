@@ -48,7 +48,7 @@ from nnunetv2.training.logging.nnunet_logger import nnUNetLogger
 from nnunetv2.training.loss.compound_losses import DC_and_CE_loss, DC_and_BCE_loss
 from nnunetv2.training.loss.deep_supervision import DeepSupervisionWrapper
 from nnunetv2.training.loss.dice import get_tp_fp_fn_tn, MemoryEfficientSoftDiceLoss
-from nnunetv2.training.loss.focal_loss import FocalLoss
+from nnunetv2.training.loss.focal_loss import FL_and_CE_loss
 from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler, WarmupCosineScheduler
 from nnunetv2.utilities.collate_outputs import collate_outputs
 from nnunetv2.utilities.default_n_proc_DA import get_allowed_n_proc_DA
@@ -2426,12 +2426,12 @@ class nnUNetTrainerE2CNN(nnUNetTrainer):
         self.on_train_end()
 
 
-class nnUNetTrainerE2CNN_FL(nnUNetTrainerE2CNN):
+class nnUNetTrainerE2CNN_FL_CE(nnUNetTrainerE2CNN):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
-        print("Setting up FocalLoss(alpha=[0.75, 0.25], apply_nonlin=nn.Softmax())")
-        self.loss = FocalLoss(alpha=[0.75, 0.25], apply_nonlin=nn.Softmax())
+        print("Setting up FocalLoss(alpha=[0.75, 0.25], apply_nonlin=nn.Softmax()) + CE")
+        self.loss = FL_and_CE_loss(fl_kwargs={"alpha": [0.75, 0.25]})
 
 
 class nnUNetTrainerBCNN(nnUNetTrainer):
@@ -3610,3 +3610,11 @@ class nnUNetTrainerBCNN(nnUNetTrainer):
             self.on_epoch_end()
 
         self.on_train_end()
+
+
+class nnUNetTrainerBCNN_FL_CE(nnUNetTrainerBCNN):
+    def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
+                 device: torch.device = torch.device('cuda')):
+        super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
+        print("Setting up FocalLoss(alpha=[0.75, 0.25], apply_nonlin=nn.Softmax()) + CE")
+        self.loss = FL_and_CE_loss(fl_kwargs={"alpha": [0.75, 0.25]})

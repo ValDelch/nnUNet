@@ -937,7 +937,13 @@ class ExperimentPlannerE2CNN(object):
         approximate_n_voxels_dataset = float(np.prod(new_median_shape_transposed, dtype=np.float64) *
                                              self.dataset_json['numTraining'])
         # only run 3d if this is a 3d dataset
-        if new_median_shape_transposed[0] != 1:
+        #if new_median_shape_transposed[0] != 1:
+
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # SKIPPING 3D DATASET FOR THE MOMENT
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        if False:
             plan_3d_fullres = self.get_plans_for_configuration(fullres_spacing_transposed,
                                                                new_median_shape_transposed,
                                                                self.generate_data_identifier('3d_fullres'),
@@ -979,6 +985,7 @@ class ExperimentPlannerE2CNN(object):
                 plan_3d_fullres['batch_dice'] = True
             else:
                 plan_3d_fullres['batch_dice'] = False
+
         else:
             plan_3d_fullres = None
             plan_3d_lowres = None
