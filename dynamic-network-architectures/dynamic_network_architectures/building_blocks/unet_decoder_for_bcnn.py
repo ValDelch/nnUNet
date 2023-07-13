@@ -57,8 +57,8 @@ class UNetDecoder(nn.Module):
             # input features to conv is 2x input_features_skip (concat input_features_skip with transpconv output)
             stages.append(StackedConvBlocks(
                 n_conv_per_stage[s-1], nn.Conv2d, 2 * input_features_skip, input_features_skip,
-                encoder.kernel_sizes[-(s + 1)], 1, True, nn.InstanceNorm2d, None,
-                encoder.dropout_op, encoder.dropout_op_kwargs, nn.LeakyReLU, {'negative_slope': 1e-2, 'inplace': True}, nonlin_first
+                encoder.kernel_sizes[-(s + 1)], 1, True, nn.InstanceNorm2d, {'eps': 1e-5, 'affine': True},
+                encoder.dropout_op, encoder.dropout_op_kwargs, nn.LeakyReLU, {'inplace': True}, nonlin_first
             ))
 
             # we always build the deep supervision outputs so that we can always load parameters. If we don't do this
