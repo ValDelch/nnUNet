@@ -29,7 +29,8 @@ class PlainConvEncoder(nn.Module):
                  nonlin_first: bool = False,
                  pool: str = 'conv',
                  reflex_inv: bool = False,
-                 scale_inv: bool = False
+                 scale_inv: bool = False,
+                 cutoff: str = 'strong'
                  ):
 
         super().__init__()
@@ -61,7 +62,8 @@ class PlainConvEncoder(nn.Module):
                 raise RuntimeError()
             stage_modules.append(StackedConvBlocks(
                 n_conv_per_stage[s], conv_op, input_channels, features_per_stage[s], kernel_sizes[s], conv_stride,
-                norm_op, norm_op_kwargs, dropout_op, dropout_op_kwargs, nonlin, nonlin_kwargs, nonlin_first, reflex_inv, scale_inv
+                norm_op, norm_op_kwargs, dropout_op, dropout_op_kwargs, nonlin, nonlin_kwargs, nonlin_first, reflex_inv, 
+                scale_inv, cutoff
             ))
             stages.append(nn.Sequential(*stage_modules))
             input_channels = features_per_stage[s]
@@ -82,6 +84,7 @@ class PlainConvEncoder(nn.Module):
         self.kernel_sizes = kernel_sizes
         self.reflex_inv = reflex_inv
         self.scale_inv = scale_inv
+        self.cutoff = cutoff
 
     def forward(self, x):
         ret = []

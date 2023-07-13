@@ -32,7 +32,8 @@ class PlainConvUNet(nn.Module):
                  deep_supervision: bool = False,
                  nonlin_first: bool = False,
                  reflex_inv: bool = False,
-                 scale_inv: bool = False
+                 scale_inv: bool = False,
+                 cutoff: str = 'strong'
                  ):
         """
         nonlin_first: if True you get conv -> nonlin -> norm. Else it's conv -> norm -> nonlin
@@ -50,9 +51,9 @@ class PlainConvUNet(nn.Module):
                                                                 f"stages, so it should have {n_stages - 1} entries. " \
                                                                 f"n_conv_per_stage_decoder: {n_conv_per_stage_decoder}"
         self.encoder = PlainConvEncoder(input_channels, n_stages, features_per_stage, conv_op, kernel_sizes, strides,
-                                        n_conv_per_stage, norm_op, norm_op_kwargs, dropout_op,
-                                        dropout_op_kwargs, nonlin, nonlin_kwargs, return_skips=True,
-                                        nonlin_first=nonlin_first, reflex_inv=reflex_inv, scale_inv=scale_inv)
+                                        n_conv_per_stage, norm_op, norm_op_kwargs, dropout_op, dropout_op_kwargs, nonlin, 
+                                        nonlin_kwargs, return_skips=True, nonlin_first=nonlin_first, reflex_inv=reflex_inv,
+                                        scale_inv=scale_inv, cutoff=cutoff)
         self.decoder = UNetDecoder(self.encoder, num_classes, n_conv_per_stage_decoder, deep_supervision,
                                    nonlin_first=nonlin_first)
 

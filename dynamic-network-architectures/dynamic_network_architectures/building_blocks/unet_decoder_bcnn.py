@@ -68,7 +68,8 @@ class UNetDecoder(nn.Module):
                         nonlin_kwargs=encoder.nonlin_kwargs,
                         nonlin_first=nonlin_first,
                         reflex_inv=encoder.reflex_inv,
-                        scale_inv=encoder.scale_inv
+                        scale_inv=encoder.scale_inv,
+                        cutoff=encoder.cutoff
                     )
                 )
             )
@@ -78,7 +79,7 @@ class UNetDecoder(nn.Module):
                 n_conv_per_stage[s-1], encoder.conv_op, 2 * input_features_skip, input_features_skip,
                 encoder.kernel_sizes[-(s + 1)], 1, encoder.norm_op, encoder.norm_op_kwargs,
                 encoder.dropout_op, encoder.dropout_op_kwargs, encoder.nonlin, encoder.nonlin_kwargs, nonlin_first,
-                encoder.reflex_inv, encoder.scale_inv
+                encoder.reflex_inv, encoder.scale_inv, encoder.cutoff
             ))
 
             # we always build the deep supervision outputs so that we can always load parameters. If we don't do this

@@ -25,7 +25,8 @@ class ConvDropoutNormReLU(nn.Module):
                  nonlin_kwargs: dict = None,
                  nonlin_first: bool = False,
                  reflex_inv: bool = False,
-                 scale_inv: bool = False
+                 scale_inv: bool = False,
+                 cutoff: str = 'strong'
                  ):
         super(ConvDropoutNormReLU, self).__init__()
         self.input_channels = input_channels
@@ -52,7 +53,8 @@ class ConvDropoutNormReLU(nn.Module):
             strides=stride,
             padding='same',
             reflex_inv=reflex_inv,
-            scale_inv=scale_inv
+            scale_inv=scale_inv,
+            cutoff=cutoff
         )
         ops.append(self.conv)
 
@@ -100,7 +102,8 @@ class StackedConvBlocks(nn.Module):
                  nonlin_kwargs: dict = None,
                  nonlin_first: bool = False,
                  reflex_inv: bool = False,
-                 scale_inv: bool = False
+                 scale_inv: bool = False,
+                 cutoff: str = 'strong'
                  ):
         """
 
@@ -126,12 +129,14 @@ class StackedConvBlocks(nn.Module):
         self.convs = nn.Sequential(
             ConvDropoutNormReLU(
                 conv_op, input_channels, output_channels[0], kernel_size, initial_stride, norm_op,
-                norm_op_kwargs, dropout_op, dropout_op_kwargs, nonlin, nonlin_kwargs, nonlin_first, reflex_inv, scale_inv
+                norm_op_kwargs, dropout_op, dropout_op_kwargs, nonlin, nonlin_kwargs, nonlin_first, reflex_inv, 
+                scale_inv, cutoff
             ),
             *[
                 ConvDropoutNormReLU(
                     conv_op, output_channels[i - 1], output_channels[i], kernel_size, 1, norm_op,
-                    norm_op_kwargs, dropout_op, dropout_op_kwargs, nonlin, nonlin_kwargs, nonlin_first, reflex_inv, scale_inv
+                    norm_op_kwargs, dropout_op, dropout_op_kwargs, nonlin, nonlin_kwargs, nonlin_first, reflex_inv, 
+                    scale_inv, cutoff
                 )
                 for i in range(1, num_convs)
             ]

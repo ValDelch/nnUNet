@@ -1107,6 +1107,7 @@ class ExperimentPlannerBCNN(object):
         self.UNet_class = PlainConvUNet_bcnn
         self.reflex_inv = False
         self.scale_inv = False
+        self.cutoff = 'soft'
         # the following two numbers are really arbitrary and were set to reproduce nnU-Net v1's configurations as
         # much as possible
         self.UNet_reference_val_3d = 560000000  # 455600128  550000000
@@ -1344,7 +1345,8 @@ class ExperimentPlannerBCNN(object):
                                                    self.UNet_blocks_per_stage_decoder[:num_stages - 1],
                                                    len(self.dataset_json['labels'].keys()),
                                                    reflex_inv=self.reflex_inv,
-                                                   scale_inv=self.scale_inv)
+                                                   scale_inv=self.scale_inv,
+                                                   cutoff=self.cutoff)
 
         # how large is the reference for us here (batch size etc)?
         # adapt for our vram target
@@ -1396,7 +1398,8 @@ class ExperimentPlannerBCNN(object):
                                                        self.UNet_blocks_per_stage_decoder[:num_stages - 1],
                                                        len(self.dataset_json['labels'].keys()),
                                                        reflex_inv=self.reflex_inv,
-                                                       scale_inv=self.scale_inv)
+                                                       scale_inv=self.scale_inv, 
+                                                       cutoff=self.cutoff)
 
         # alright now let's determine the batch size. This will give self.UNet_min_batch_size if the while loop was
         # executed. If not, additional vram headroom is used to increase batch size
