@@ -1157,7 +1157,8 @@ class ExperimentPlannerBCNN(object):
                                    blocks_per_stage_decoder: Union[int, Tuple[int]],
                                    num_labels: int,
                                    reflex_inv: bool = False,
-                                   scale_inv: bool = False):
+                                   scale_inv: bool = False,
+                                   cutoff: str = 'strong'):
         """
         Works for PlainConvUNet, ResidualEncoderUNet
         """
@@ -1175,7 +1176,8 @@ class ExperimentPlannerBCNN(object):
                          blocks_per_stage_decoder,
                          norm_op=norm_op,
                          reflex_inv=reflex_inv,
-                         scale_inv=scale_inv)
+                         scale_inv=scale_inv,
+                         cutoff=cutoff)
         return net.compute_conv_feature_map_size(patch_size)
 
     def determine_resampling(self, *args, **kwargs):
