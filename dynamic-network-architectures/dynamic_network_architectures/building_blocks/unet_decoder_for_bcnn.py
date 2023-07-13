@@ -52,12 +52,12 @@ class UNetDecoder(nn.Module):
             stride_for_transpconv = encoder.strides[-s]
             transpconvs.append(transpconv_op(
                 input_features_below, input_features_skip, stride_for_transpconv, stride_for_transpconv,
-                bias=encoder.conv_bias
+                bias=True
             ))
             # input features to conv is 2x input_features_skip (concat input_features_skip with transpconv output)
             stages.append(StackedConvBlocks(
                 n_conv_per_stage[s-1], nn.Conv2d, 2 * input_features_skip, input_features_skip,
-                encoder.kernel_sizes[-(s + 1)], 1, encoder.conv_bias, nn.InstanceNorm2d, None,
+                encoder.kernel_sizes[-(s + 1)], 1, True, nn.InstanceNorm2d, None,
                 encoder.dropout_op, encoder.dropout_op_kwargs, nn.LeakyReLU, {'negative_slope': 1e-2, 'inplace': True}, nonlin_first
             ))
 
