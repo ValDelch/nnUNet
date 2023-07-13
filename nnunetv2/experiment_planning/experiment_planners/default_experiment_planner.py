@@ -1107,7 +1107,7 @@ class ExperimentPlannerBCNN(object):
         self.UNet_class = PlainConvUNet_bcnn
         self.reflex_inv = False
         self.scale_inv = False
-        self.cutoff = 'soft'
+        self.cutoff = 'strong'
         # the following two numbers are really arbitrary and were set to reproduce nnU-Net v1's configurations as
         # much as possible
         self.UNet_reference_val_3d = 560000000  # 455600128  550000000

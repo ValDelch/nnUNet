@@ -35,7 +35,7 @@ def get_network_from_plans(plans_manager: PlansManager,
             #'nonlin': nn.LeakyReLU, 'nonlin_kwargs': {'inplace': True},
             'reflex_inv': False,
             'scale_inv': False,
-            'cutoff': 'soft'
+            'cutoff': 'strong'
         }
     }
     assert segmentation_network_class_name in mapping.keys(), 'The network architecture specified by the plans file ' \
