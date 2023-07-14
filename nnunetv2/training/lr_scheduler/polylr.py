@@ -43,7 +43,8 @@ class WarmupCosineScheduler(_LRScheduler):
             new_lr = self.initial_lr * progress
         else:
             progress = float(current_step - self.warmup_steps) / float(max(1., self.max_steps - self.warmup_steps))
-            new_lr = self.initial_lr * (1 + math.cos(math.pi * float(self.cycles) * 2. * progress)) / 2.
+            new_lr = self.initial_lr * (1. - progress) ** 0.9
+            #new_lr = self.initial_lr * (1 + math.cos(math.pi * float(self.cycles) * 2. * progress)) / 2.
 
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = new_lr

@@ -1253,8 +1253,7 @@ class nnUNetTrainer_FL_CE(nnUNetTrainer):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
-        print("Setting up FocalLoss(alpha=[0.75, 0.25], apply_nonlin=nn.Softmax()) + CE")
-        self.loss = FL_and_CE_loss(fl_kwargs={"alpha": [0.75, 0.25]})
+        self.loss = FL_and_CE_loss(alpha=0.5)
 
 
 class nnUNetTrainerE2CNN(nnUNetTrainer):
@@ -2438,8 +2437,7 @@ class nnUNetTrainerE2CNN_FL_CE(nnUNetTrainerE2CNN):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
-        print("Setting up FocalLoss(alpha=[0.75, 0.25], apply_nonlin=nn.Softmax()) + CE")
-        self.loss = FL_and_CE_loss(fl_kwargs={"alpha": [0.75, 0.25]})
+        self.loss = FL_and_CE_loss(alpha=0.5)
 
 
 class nnUNetTrainerBCNN(nnUNetTrainer):
@@ -3624,5 +3622,4 @@ class nnUNetTrainerBCNN_FL_CE(nnUNetTrainerBCNN):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
-        print("Setting up FocalLoss(alpha=[0.75, 0.25], apply_nonlin=nn.Softmax()) + CE")
-        self.loss = FL_and_CE_loss(fl_kwargs={"alpha": [0.75, 0.25]})
+        self.loss = FL_and_CE_loss(alpha=0.5)

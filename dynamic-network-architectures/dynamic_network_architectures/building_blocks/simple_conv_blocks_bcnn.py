@@ -54,6 +54,7 @@ class ConvDropoutNormReLU(nn.Module):
             padding='same',
             reflex_inv=reflex_inv,
             scale_inv=scale_inv,
+            TensorCorePad=False,
             cutoff=cutoff
         )
         ops.append(self.conv)
