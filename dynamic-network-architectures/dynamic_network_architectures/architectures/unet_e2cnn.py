@@ -6,7 +6,8 @@ from torch import nn as torch_nn
 from e2cnn import nn as e2_nn
 
 from dynamic_network_architectures.building_blocks.plain_conv_encoder_e2cnn import PlainConvEncoder
-from dynamic_network_architectures.building_blocks.unet_decoder_e2cnn import UNetDecoder
+#from dynamic_network_architectures.building_blocks.unet_decoder_e2cnn import UNetDecoder
+from dynamic_network_architectures.building_blocks.unet_decoder_for_e2cnn import UNetDecoder
 from dynamic_network_architectures.building_blocks.helper_e2cnn import convert_conv_op_to_dim
 
 
