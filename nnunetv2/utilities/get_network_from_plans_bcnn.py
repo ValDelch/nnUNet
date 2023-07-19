@@ -1,4 +1,4 @@
-from dynamic_network_architectures.architectures.unet_bcnn import PlainConvUNet
+from dynamic_network_architectures.architectures.unet_for_bcnn import PlainConvUNet
 from dynamic_network_architectures.building_blocks.helper_bcnn import get_matching_instancenorm, convert_dim_to_conv_op, get_matching_batchnorm
 from nnunetv2.utilities.plans_handling.plans_handler import ConfigurationManager, PlansManager
 from torch import nn

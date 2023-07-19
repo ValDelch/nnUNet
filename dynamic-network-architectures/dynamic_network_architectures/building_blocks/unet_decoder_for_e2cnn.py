@@ -5,7 +5,7 @@ import torch
 from torch import nn as torch_nn
 from e2cnn import nn as e2_nn
 
-from dynamic_network_architectures.building_blocks.simple_conv_blocks_e2cnn import ConvertToTensor, ConvDropoutNormReLU, StackedConvBlocks
+from dynamic_network_architectures.building_blocks.simple_conv_blocks import StackedConvBlocks
 from dynamic_network_architectures.building_blocks.helper import get_matching_convtransp
 from dynamic_network_architectures.building_blocks.plain_conv_encoder_e2cnn import PlainConvEncoder
 
@@ -31,7 +31,6 @@ class UNetDecoder(e2_nn.EquivariantModule):
         stages = []
         transpconvs = []
         seg_layers = []
-        self.out_types = []
         for s in range(1, n_stages_encoder):
             input_features_below = encoder.output_channels[-s]
             input_features_skip = encoder.output_channels[-(s + 1)]
@@ -43,10 +42,9 @@ class UNetDecoder(e2_nn.EquivariantModule):
             # input features to conv is 2x input_features_skip (concat input_features_skip with transpconv output)
             stages.append(StackedConvBlocks(
                 n_conv_per_stage[s-1], torch_nn.Conv2d, 2 * input_features_skip, input_features_skip,
-                encoder.kernel_sizes[-(s + 1)], 1, True, torch_nn.InstanceNorm2d, {'eps': 1e-5, 'affine': True},
+                3, 1, True, torch_nn.InstanceNorm2d, {'eps': 1e-5, 'affine': True},
                 encoder.dropout_op, encoder.dropout_op_kwargs, torch_nn.LeakyReLU, {'inplace': True}, nonlin_first
             ))
-            self.out_types.append(stages[-s].out_type)
 
             # we always build the deep supervision outputs so that we can always load parameters. If we don't do this
             # then a model trained with deep_supervision=True could not easily be loaded at inference time where
@@ -58,11 +56,11 @@ class UNetDecoder(e2_nn.EquivariantModule):
         self.seg_layers = torch_nn.ModuleList(seg_layers)
 
     def forward(self, skips):
-        lres_input = e2_nn.GroupPooling(self.out_types[-1])(skips[-1]).tensor
+        lres_input = e2_nn.GroupPooling(self.encoder.out_types[-1])(skips[-1]).tensor
         seg_outputs = []
         for s in range(len(self.stages)):
             x = self.transpconvs[s](lres_input)
-            x = e2_nn.tensor_directsum([x, e2_nn.GroupPooling(self.out_types[-(s+2)])(skips[-(s+2)]).tensor])
+            x = e2_nn.tensor_directsum([x, e2_nn.GroupPooling(self.encoder.out_types[-(s+2)])(skips[-(s+2)]).tensor])
             x = self.stages[s](x)
             if self.deep_supervision:
                 seg_outputs.append(
@@ -83,20 +81,24 @@ class UNetDecoder(e2_nn.EquivariantModule):
             r = seg_outputs
         return r
 
-    def compute_conv_feature_map_size(self, input_size, order=4):
+    def compute_conv_feature_map_size(self, input_size):
         skip_sizes = []
         for s in range(len(self.encoder.strides) - 1):
-            skip_sizes.append(
-                [i // j for i,j in zip(input_size, self.encoder.strides[s])]
-            )
+            skip_sizes.append([i // j for i, j in zip(input_size, self.encoder.strides[s])])
             input_size = skip_sizes[-1]
+        # print(skip_sizes)
 
         assert len(skip_sizes) == len(self.stages)
 
+        # our ops are the other way around, so let's match things up
         output = np.int64(0)
         for s in range(len(self.stages)):
-            output += self.stages[s].compute_conv_feature_map_size(skip_sizes[-(s+1)], order=order)
-            output += np.prod([self.encoder.output_channels[-(s+2)]*order, *skip_sizes[-(s+1)]], dtype=np.int64)
+            # print(skip_sizes[-(s+1)], self.encoder.output_channels[-(s+2)])
+            # conv blocks
+            output += self.stages[s].compute_conv_feature_map_size(skip_sizes[-(s+1)])
+            # trans conv
+            output += np.prod([self.encoder.output_channels[-(s+2)], *skip_sizes[-(s+1)]], dtype=np.int64)
+            # segmentation
             if self.deep_supervision or (s == (len(self.stages) - 1)):
                 output += np.prod([self.num_classes, *skip_sizes[-(s+1)]], dtype=np.int64)
         return output

@@ -6,8 +6,8 @@ from torch import nn as torch_nn
 from e2cnn import nn as e2_nn
 
 from dynamic_network_architectures.building_blocks.plain_conv_encoder_e2cnn import PlainConvEncoder
-from dynamic_network_architectures.building_blocks.unet_decoder_e2cnn import UNetDecoder
-#from dynamic_network_architectures.building_blocks.unet_decoder_for_e2cnn import UNetDecoder
+#from dynamic_network_architectures.building_blocks.unet_decoder_e2cnn import UNetDecoder
+from dynamic_network_architectures.building_blocks.unet_decoder_for_e2cnn import UNetDecoder
 from dynamic_network_architectures.building_blocks.helper_e2cnn import convert_conv_op_to_dim
 
 
@@ -59,7 +59,7 @@ class PlainConvUNet(torch_nn.Module):
     
     def compute_conv_feature_map_size(self, input_size, order=4):
         assert len(input_size) == convert_conv_op_to_dim(self.encoder.conv_op), "input_size must have as many entries as we have spatial dimensions"
-        return self.encoder.compute_conv_feature_map_size(input_size, order=order) + self.decoder.compute_conv_feature_map_size(input_size, order=order)
+        return self.encoder.compute_conv_feature_map_size(input_size, order=order) + self.decoder.compute_conv_feature_map_size(input_size)
     
 
 if __name__ == '__main__':

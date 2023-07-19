@@ -6,8 +6,8 @@ from torch.nn.modules.conv import _ConvNd
 from torch.nn.modules.dropout import _DropoutNd
 
 from dynamic_network_architectures.building_blocks.plain_conv_encoder_bcnn import PlainConvEncoder
-from dynamic_network_architectures.building_blocks.unet_decoder_bcnn import UNetDecoder
-#from dynamic_network_architectures.building_blocks.unet_decoder_for_bcnn import UNetDecoder
+#from dynamic_network_architectures.building_blocks.unet_decoder_bcnn import UNetDecoder
+from dynamic_network_architectures.building_blocks.unet_decoder_for_bcnn import UNetDecoder
 from dynamic_network_architectures.building_blocks.helper_bcnn import convert_conv_op_to_dim
 
 from BesselConv.BesselConv2d import BesselConv2d
