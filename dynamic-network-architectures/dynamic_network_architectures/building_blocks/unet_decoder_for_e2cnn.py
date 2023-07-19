@@ -60,7 +60,7 @@ class UNetDecoder(e2_nn.EquivariantModule):
         seg_outputs = []
         for s in range(len(self.stages)):
             x = self.transpconvs[s](lres_input)
-            x = e2_nn.tensor_directsum([x, e2_nn.GroupPooling(self.encoder.out_types[-(s+2)])(skips[-(s+2)]).tensor])
+            x = torch.cat((x, e2_nn.GroupPooling(self.encoder.out_types[-(s+2)])(skips[-(s+2)]).tensor), 1)
             x = self.stages[s](x)
             if self.deep_supervision:
                 seg_outputs.append(
