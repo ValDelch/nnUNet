@@ -1261,7 +1261,8 @@ class nnUNetTrainer_FL_CE_continue(nnUNetTrainer_FL_CE):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
-        self.num_epochs = 1500
+        self.num_epochs = 500
+        self.initial_lr = 1e-2 / 3.
 
 
 class nnUNetTrainerE2CNN(nnUNetTrainer):
@@ -2453,7 +2454,8 @@ class nnUNetTrainerE2CNN_FL_CE_continue(nnUNetTrainerE2CNN_FL_CE):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
-        self.num_epochs = 1500
+        self.num_epochs = 500
+        self.initial_lr = 1e-2 / 3.
 
 
 class nnUNetTrainerBCNN(nnUNetTrainer):
@@ -3645,4 +3647,5 @@ class nnUNetTrainerBCNN_FL_CE_continue(nnUNetTrainerBCNN_FL_CE):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
-        self.num_epochs = 1500
+        self.num_epochs = 500
+        self.initial_lr = 1e-2 / 3.
