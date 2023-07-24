@@ -30,6 +30,7 @@ def get_network_from_plans(plans_manager: PlansManager,
         'PlainConvUNet': {
             'norm_op': get_matching_batchnorm(conv_op),
             'norm_op_kwargs': {'momentum': 0.01, 'eps': 1e-5, 'affine': True},
+            #'norm_op_kwargs': {'eps': 1e-5, 'affine': True},
             'dropout_op': None, 'dropout_op_kwargs': None,
             'nonlin': nn.Softsign, 'nonlin_kwargs': None,
             #'nonlin': nn.LeakyReLU, 'nonlin_kwargs': {'inplace': True},

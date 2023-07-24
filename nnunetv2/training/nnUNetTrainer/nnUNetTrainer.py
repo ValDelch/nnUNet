@@ -1257,6 +1257,13 @@ class nnUNetTrainer_FL_CE(nnUNetTrainer):
         self.loss = FL_and_CE_loss(alpha=0.5)
 
 
+class nnUNetTrainer_FL_CE_continue(nnUNetTrainer_FL_CE):
+    def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
+                 device: torch.device = torch.device('cuda')):
+        super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
+        self.num_epochs = 1500
+
+
 class nnUNetTrainerE2CNN(nnUNetTrainer):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
@@ -2442,6 +2449,13 @@ class nnUNetTrainerE2CNN_FL_CE(nnUNetTrainerE2CNN):
         self.loss = FL_and_CE_loss(alpha=0.5)
 
 
+class nnUNetTrainerE2CNN_FL_CE_continue(nnUNetTrainerE2CNN_FL_CE):
+    def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
+                 device: torch.device = torch.device('cuda')):
+        super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
+        self.num_epochs = 1500
+
+
 class nnUNetTrainerBCNN(nnUNetTrainer):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
@@ -3625,3 +3639,10 @@ class nnUNetTrainerBCNN_FL_CE(nnUNetTrainerBCNN):
                  device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
         self.loss = FL_and_CE_loss(alpha=0.5)
+
+
+class nnUNetTrainerBCNN_FL_CE_continue(nnUNetTrainerBCNN_FL_CE):
+    def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
+                 device: torch.device = torch.device('cuda')):
+        super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
+        self.num_epochs = 1500
