@@ -3,9 +3,9 @@ from typing import Tuple, List, Union, Type
 import numpy as np
 import torch
 from torch import nn as torch_nn
-from e2cnn import nn as e2_nn
+from escnn import nn as e2_nn
 
-from dynamic_network_architectures.building_blocks.simple_conv_blocks_e2cnn import ConvertToTensor, ConvDropoutNormReLU, StackedConvBlocks
+from dynamic_network_architectures.building_blocks.simple_conv_blocks_e2cnn import ConvertToTensor, ConvDropoutNormReLU, StackedConvBlocks, convert_conv_op_to_dim
 from dynamic_network_architectures.building_blocks.helper_e2cnn import get_matching_convtransp
 from dynamic_network_architectures.building_blocks.plain_conv_encoder_e2cnn import PlainConvEncoder
 
@@ -19,6 +19,7 @@ class UNetDecoder(e2_nn.EquivariantModule):
         super().__init__()
         self.deep_supervision = deep_supervision
         self.encoder = encoder
+        self.dim = convert_conv_op_to_dim(encoder.conv_op)
         self.num_classes = num_classes
         n_stages_encoder = len(encoder.output_channels)
         if isinstance(n_conv_per_stage, int):
@@ -80,21 +81,38 @@ class UNetDecoder(e2_nn.EquivariantModule):
                 )
             )
 
-            seg_layers.append(
-                torch_nn.Sequential(
-                    ConvertToTensor(
-                        in_type=e2_nn.FieldType(encoder.gspace, input_features_skip*[encoder.gspace.regular_repr])
-                    ),
-                    torch_nn.Conv2d(
-                        in_channels=input_features_skip,
-                        out_channels=num_classes,
-                        kernel_size=1,
-                        stride=1,
-                        padding=0,
-                        bias=True
+            if self.dim == 2:
+                seg_layers.append(
+                    torch_nn.Sequential(
+                        ConvertToTensor(
+                            in_type=e2_nn.FieldType(encoder.gspace, input_features_skip*[encoder.gspace.regular_repr])
+                        ),
+                        torch_nn.Conv2d(
+                            in_channels=input_features_skip,
+                            out_channels=num_classes,
+                            kernel_size=1,
+                            stride=1,
+                            padding=0,
+                            bias=True
+                        )
                     )
                 )
-            )
+            else:
+                seg_layers.append(
+                    torch_nn.Sequential(
+                        ConvertToTensor(
+                            in_type=e2_nn.FieldType(encoder.gspace, input_features_skip*[encoder.gspace.regular_repr])
+                        ),
+                        torch_nn.Conv3d(
+                            in_channels=input_features_skip,
+                            out_channels=num_classes,
+                            kernel_size=1,
+                            stride=1,
+                            padding=0,
+                            bias=True
+                        )
+                    )
+                )
 
         self.transpconvs = torch_nn.ModuleList(transpconvs)
         self.stages = torch_nn.ModuleList(stages)
@@ -139,7 +157,7 @@ class UNetDecoder(e2_nn.EquivariantModule):
         output = np.int64(0)
         for s in range(len(self.stages)):
             output += self.stages[s].compute_conv_feature_map_size(skip_sizes[-(s+1)], order=order)
-            output += np.prod([self.encoder.output_channels[-(s+2)]*order, *skip_sizes[-(s+1)]], dtype=np.int64)
+            output += np.prod([self.encoder.output_channels[-(s+2)]*(order**(self.dim-1)), *skip_sizes[-(s+1)]], dtype=np.int64)
             if self.deep_supervision or (s == (len(self.stages) - 1)):
                 output += np.prod([self.num_classes, *skip_sizes[-(s+1)]], dtype=np.int64)
         return output
@@ -150,13 +168,13 @@ class UNetDecoder(e2_nn.EquivariantModule):
 
 if __name__ == '__main__':
 
-    from e2cnn import gspaces
+    from escnn import gspaces
 
-    # Test
+    # Test 2D
     input_channels = 3
     data = torch.rand(1, input_channels, 256, 128)
 
-    r2_act = gspaces.Rot2dOnR2(N=4)
+    r2_act = gspaces.rot2dOnR2(N=4)
     in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
 
     model = PlainConvEncoder(
@@ -179,14 +197,42 @@ if __name__ == '__main__':
         pool='conv'
     )
 
-    """
-    output will be of shape:
+    decoder = UNetDecoder(
+        encoder=model,
+        num_classes=2,
+        n_conv_per_stage=2,
+        deep_supervision=True
+    )
 
-    [torch.Size([1, 64, 128, 64]), 
-    torch.Size([1, 64, 64, 32]), 
-    torch.Size([1, 64, 32, 16]), 
-    torch.Size([1, 64, 16, 8])]
-    """
+    print([type(x) for x in decoder(model(data))])
+    print([x.shape for x in decoder(model(data))])
+
+    # Test 3D
+    input_channels = 3
+    data = torch.rand(1, input_channels, 128, 64, 64)
+
+    r2_act = gspaces.octaOnR3()
+    in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
+
+    model = PlainConvEncoder(
+        gspace=r2_act,
+        input_channels=input_channels,
+        n_stages=4,
+        features_per_stage=8,
+        conv_op=e2_nn.R3Conv,
+        kernel_sizes=5,
+        strides=2,
+        n_conv_per_stage=2,
+        conv_bias=True,
+        norm_op=e2_nn.InnerBatchNorm,
+        norm_op_kwargs=None,
+        dropout_op=e2_nn.PointwiseDropout,
+        dropout_op_kwargs={'p': 0.1},
+        nonlin=e2_nn.ELU,
+        nonlin_kwargs={'alpha': 0.1, 'inplace': True},
+        return_skips=True,
+        pool='conv'
+    )
 
     decoder = UNetDecoder(
         encoder=model,

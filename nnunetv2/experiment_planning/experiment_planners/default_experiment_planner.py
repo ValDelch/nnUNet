@@ -9,7 +9,7 @@ from dynamic_network_architectures.architectures.unet import PlainConvUNet, Resi
 from dynamic_network_architectures.building_blocks.helper import convert_dim_to_conv_op, get_matching_instancenorm
 
 # New for e2cnn ExperimentPlanner
-from e2cnn import gspaces
+from escnn import gspaces
 from dynamic_network_architectures.architectures.unet_for_e2cnn import PlainConvUNet as PlainConvUNet_e2cnn
 from dynamic_network_architectures.building_blocks.helper_e2cnn import convert_dim_to_conv_op as convert_dim_to_conv_op_e2cnn
 from dynamic_network_architectures.building_blocks.helper_e2cnn import get_matching_batchnorm as get_matching_batchnorm_e2cnn
@@ -578,7 +578,7 @@ class ExperimentPlannerE2CNN(object):
         self.order = 4
         # the following two numbers are really arbitrary and were set to reproduce nnU-Net v1's configurations as
         # much as possible
-        self.UNet_reference_val_3d = 560000000  # 455600128  550000000
+        self.UNet_reference_val_3d = 560000000*6  # 455600128  550000000
         self.UNet_reference_val_2d = 85000000*2.5  # 83252480
         self.UNet_reference_com_nfeatures = 32
         self.UNet_reference_val_corresp_GB = 8
@@ -590,7 +590,7 @@ class ExperimentPlannerE2CNN(object):
         self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2, 2, 2)
         self.UNet_min_batch_size = 2
         self.UNet_max_features_2d = 128
-        self.UNet_max_features_3d = 320
+        self.UNet_max_features_3d = 64
 
         self.lowres_creation_threshold = 0.25  # if the patch size of fullres is less than 25% of the voxels in the
         # median shape then we need a lowres config as well
@@ -937,13 +937,7 @@ class ExperimentPlannerE2CNN(object):
         approximate_n_voxels_dataset = float(np.prod(new_median_shape_transposed, dtype=np.float64) *
                                              self.dataset_json['numTraining'])
         # only run 3d if this is a 3d dataset
-        #if new_median_shape_transposed[0] != 1:
-
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # SKIPPING 3D DATASET FOR THE MOMENT
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        if False:
+        if new_median_shape_transposed[0] != 1:
             plan_3d_fullres = self.get_plans_for_configuration(fullres_spacing_transposed,
                                                                new_median_shape_transposed,
                                                                self.generate_data_identifier('3d_fullres'),

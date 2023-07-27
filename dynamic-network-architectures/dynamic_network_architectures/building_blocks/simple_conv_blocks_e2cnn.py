@@ -3,10 +3,9 @@ from typing import Tuple, List, Union, Type
 import numpy as np
 import torch
 from torch import nn as torch_nn
-from e2cnn import nn as e2_nn
-from e2cnn.gspaces import GeneralOnR2
+from escnn import nn as e2_nn
 
-from dynamic_network_architectures.building_blocks.helper_e2cnn import maybe_convert_scalar_to_list
+from dynamic_network_architectures.building_blocks.helper_e2cnn import maybe_convert_scalar_to_list, convert_conv_op_to_dim
 
 
 class ConvertToTensor(e2_nn.EquivariantModule):
@@ -49,6 +48,7 @@ class ConvDropoutNormReLU(e2_nn.EquivariantModule):
         self.output_channels = output_channels
         stride = maybe_convert_scalar_to_list(conv_op, initial_stride)
         self.stride = stride
+        self.dim = convert_conv_op_to_dim(conv_op)
 
         if (type(kernel_size) is tuple) or (type(kernel_size) is list):
             kernel_size = kernel_size[0]
@@ -100,7 +100,7 @@ class ConvDropoutNormReLU(e2_nn.EquivariantModule):
                                                     "batch channel. Do not give input_size=(b, c, x, y(, z)). " \
                                                     "Give input_size=(x, y(, z))!"
         output_size = [i // j for i, j in zip(input_size, self.stride)]  # we always do same padding
-        return np.prod([self.output_channels*order, *output_size], dtype=np.int64)
+        return np.prod([self.output_channels*(order**(self.dim-1)), *output_size], dtype=np.int64)
     
     def evaluate_output_shape(self, input_shape: Tuple[int, ...]) -> Tuple[int, ...]:
         pass
@@ -193,13 +193,13 @@ class StackedConvBlocks(e2_nn.EquivariantModule):
 
 if __name__ == '__main__':
 
-    from e2cnn import gspaces
+    from escnn import gspaces
 
-    # Test
+    # Test 2D
     input_channels = 3
     data = torch.rand(1, input_channels, 40, 32)
 
-    r2_act = gspaces.Rot2dOnR2(N=4)
+    r2_act = gspaces.rot2dOnR2(N=4)
     in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
 
     stx = StackedConvBlocks(
@@ -248,10 +248,55 @@ if __name__ == '__main__':
 
     print(stx.compute_conv_feature_map_size((40, 32), 4))
 
-    if False:
-        import hiddenlayer as hl
+    # Test 3D
+    input_channels = 3
+    data = torch.rand(1, input_channels, 40, 32, 32)
 
-        g = hl.build_graph(model, data,
-                           transforms=None)
-        g.save("network_architecture.pdf")
-        del g
+    r2_act = gspaces.octaOnR3()
+    in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
+
+    stx = StackedConvBlocks(
+        num_convs=2,
+        conv_op=e2_nn.R3Conv,
+        in_type=in_type,
+        input_channels=input_channels,
+        output_channels=8,
+        kernel_size=5,
+        initial_stride=2,
+        conv_bias=True,
+        norm_op=e2_nn.InnerBatchNorm,
+        norm_op_kwargs=None,
+        dropout_op=e2_nn.PointwiseDropout,
+        dropout_op_kwargs={'p': 0.1},
+        nonlin=e2_nn.ELU,
+        nonlin_kwargs={'alpha': 0.1, 'inplace': True}
+    )
+
+    model = torch_nn.Sequential(
+        stx,
+        ConvDropoutNormReLU(
+            conv_op=e2_nn.R3Conv,
+            in_type=stx.convs[-1].out_type,
+            input_channels=stx.output_channels,
+            output_channels=32,
+            kernel_size=(7,7,7),
+            initial_stride=1,
+            conv_bias=True,
+            norm_op=e2_nn.InnerBatchNorm,
+            norm_op_kwargs=None,
+            dropout_op=None,
+            dropout_op_kwargs=None,
+            nonlin=e2_nn.ReLU,
+            nonlin_kwargs={'inplace': True}
+        )
+    )
+
+    model = torch_nn.Sequential(
+        model,
+        ConvertToTensor(in_type=model[-1].out_type)
+    )
+
+    print(model(data).shape)
+    print(type(model(data)))
+
+    print(stx.compute_conv_feature_map_size((40, 32, 32), 4))

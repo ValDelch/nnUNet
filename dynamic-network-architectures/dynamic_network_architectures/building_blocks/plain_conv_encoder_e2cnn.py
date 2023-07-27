@@ -3,7 +3,7 @@ from typing import Tuple, List, Union, Type
 import numpy as np
 import torch
 from torch import nn as torch_nn
-from e2cnn import nn as e2_nn
+from escnn import nn as e2_nn
 
 from dynamic_network_architectures.building_blocks.simple_conv_blocks_e2cnn import StackedConvBlocks
 from dynamic_network_architectures.building_blocks.helper_e2cnn import maybe_convert_scalar_to_list, get_matching_pool_op
@@ -120,13 +120,13 @@ class PlainConvEncoder(e2_nn.EquivariantModule):
 
 if __name__ == '__main__':
 
-    from e2cnn import gspaces
+    from escnn import gspaces
 
-    # Test
+    # Test 2D
     input_channels = 3
     data = torch.rand(1, input_channels, 256, 128)
 
-    r2_act = gspaces.Rot2dOnR2(N=4)
+    r2_act = gspaces.rot2dOnR2(N=4)
     in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
 
     model = PlainConvEncoder(
@@ -153,3 +153,35 @@ if __name__ == '__main__':
     print([x.shape for x in model(data)])
     print([type(x) for x in model(data)])
     print(model.compute_conv_feature_map_size((64, 128), 4))
+
+    # Test 3D
+    input_channels = 3
+    data = torch.rand(1, input_channels, 128, 64, 64)
+
+    r2_act = gspaces.octaOnR3()
+    in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
+
+    model = PlainConvEncoder(
+        gspace=r2_act,
+        input_channels=input_channels,
+        n_stages=4,
+        features_per_stage=16,
+        conv_op=e2_nn.R3Conv,
+        kernel_sizes=5,
+        strides=2,
+        n_conv_per_stage=2,
+        conv_bias=True,
+        norm_op=e2_nn.InnerBatchNorm,
+        norm_op_kwargs=None,
+        dropout_op=e2_nn.PointwiseDropout,
+        dropout_op_kwargs={'p': 0.1},
+        nonlin=e2_nn.ELU,
+        nonlin_kwargs={'alpha': 0.1, 'inplace': True},
+        return_skips=True,
+        pool='conv'
+    )
+
+    print(model.out_types)
+    print([x.shape for x in model(data)])
+    print([type(x) for x in model(data)])
+    print(model.compute_conv_feature_map_size((32, 32, 64), 4))

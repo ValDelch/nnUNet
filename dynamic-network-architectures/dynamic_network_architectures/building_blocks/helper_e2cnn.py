@@ -1,22 +1,26 @@
 from typing import Type
 import numpy as np
 
-from e2cnn import nn
-from e2cnn.nn import EquivariantModule 
+from escnn import nn
+from escnn.nn import EquivariantModule 
 
 
 def convert_dim_to_conv_op(dimension: int) -> Type[EquivariantModule]:
     if dimension == 2:
         return nn.R2Conv
+    elif dimension == 3:
+        return nn.R3Conv
     else:
-        raise ValueError('Equivariant models are just compatible with 2D images')
+        raise ValueError('Equivariant models are just compatible with 2D or 3D images')
 
 
 def convert_conv_op_to_dim(conv_op: Type[EquivariantModule]):
     if conv_op == nn.R2Conv:
         return 2
+    elif conv_op == nn.R3Conv:
+        return 3
     else:
-        raise ValueError('Equivariant models are just compatible with 2D images')
+        raise ValueError('Equivariant models are just compatible with 2D or 3D images')
 
 
 def get_matching_pool_op(conv_op: Type[EquivariantModule] = None,
@@ -31,18 +35,31 @@ def get_matching_pool_op(conv_op: Type[EquivariantModule] = None,
     if conv_op is not None:
         dimension = convert_conv_op_to_dim(conv_op)
 
-    assert dimension in [2], 'Dimension must be 2'
+    assert dimension in [2,3], 'Dimension must be 2 or 3'
 
-    if pool_type == 'avg':
-        if adaptative:
-            return nn.PointwiseAdaptiveAvgPool
-        else:
-            return nn.PointwiseAvgPool
-    elif pool_type == 'max':
-        if adaptative:
-            return nn.PointwiseAdaptiveMaxPool
-        else:
-            return nn.PointwiseMaxPool
+    if dimension == 2:
+        if pool_type == 'avg':
+            if adaptative:
+                return nn.PointwiseAdaptiveAvgPool2D
+            else:
+                return nn.PointwiseAvgPool2D
+        elif pool_type == 'max':
+            if adaptative:
+                return nn.PointwiseAdaptiveMaxPool2D
+            else:
+                return nn.PointwiseMaxPool2D
+    elif dimension == 3:
+        if pool_type == 'avg':
+            if adaptative:
+                return nn.PointwiseAdaptiveAvgPool3D
+            else:
+                return nn.PointwiseAvgPool3D
+        elif pool_type == 'max':
+            if adaptative:
+                return nn.PointwiseAdaptiveMaxPool3D
+            else:
+                return nn.PointwiseMaxPool3D
+
 
 
 def get_matching_instancenorm(conv_op: Type[EquivariantModule] = None,
@@ -63,7 +80,7 @@ def get_matching_batchnorm(conv_op: Type[EquivariantModule] = None,
     if conv_op is not None:
         dimension = convert_conv_op_to_dim(conv_op)
 
-    assert dimension in [2], 'Dimension must be 2'
+    assert dimension in [2,3], 'Dimension must be 2 or 3'
 
     return nn.InnerBatchNorm
 
@@ -81,9 +98,12 @@ def get_matching_convtransp(conv_op: Type[EquivariantModule] = None,
     if conv_op is not None:
         dimension = convert_conv_op_to_dim(conv_op)
 
-    assert dimension in [2], 'Dimension must be 2'
+    assert dimension in [2,3], 'Dimension must be 2 or 3'
 
-    return nn.R2Upsampling
+    if dimension == 2:
+        return nn.R2Upsampling
+    elif dimension == 3:
+        return nn.R3Upsampling
 
 
 def get_matching_dropout(conv_op: Type[EquivariantModule] = None,
@@ -91,7 +111,7 @@ def get_matching_dropout(conv_op: Type[EquivariantModule] = None,
     
     assert not ((conv_op is not None) and (dimension is not None)), \
         "You MUST set EITHER conv_op OR dimension. Do not set both!"
-    assert dimension in [2], 'Dimension must be 2'
+    assert dimension in [2,3], 'Dimension must be 2 or 3'
 
     return nn.PointwiseDropout
 
@@ -100,9 +120,11 @@ def maybe_convert_scalar_to_list(conv_op, scalar):
 
     if not isinstance(scalar, (tuple, list, np.ndarray)):
         dimension = convert_conv_op_to_dim(conv_op)
-        assert dimension in [2], 'Dimension must be 2'
-
-        return [scalar] * 2
+        assert dimension in [2,3], 'Dimension must be 2 or 3'
+        if dimension == 2:
+            return [scalar] * 2
+        elif dimension == 3:
+            return [scalar] * 3
     else:
         return scalar
     
@@ -139,12 +161,12 @@ if __name__ == "__main__":
 
     # Test
 
-    print("Convert dim to conv:", convert_dim_to_conv_op(2))
-    print("Convert conv to dim:", convert_conv_op_to_dim(nn.R2Conv))
-    print("Get matching pool op avg", get_matching_pool_op(dimension=2, pool_type='avg'))
-    print("Get matching pool op max", get_matching_pool_op(dimension=2, pool_type='max'))
-    print("Get matching bn", get_matching_batchnorm(dimension=2))
-    print("Get matching ConvTransp", get_matching_convtransp(dimension=2))
-    print("Get matching dropout", get_matching_dropout(dimension=2))
-    print("Get network config", get_default_network_config(dimension=2, nonlin="LeakyReLU", norm_type="bn"))
+    print("Convert dim to conv:", convert_dim_to_conv_op(3))
+    print("Convert conv to dim:", convert_conv_op_to_dim(nn.R3Conv))
+    print("Get matching pool op avg", get_matching_pool_op(dimension=3, pool_type='avg'))
+    print("Get matching pool op max", get_matching_pool_op(dimension=3, pool_type='max'))
+    print("Get matching bn", get_matching_batchnorm(dimension=3))
+    print("Get matching ConvTransp", get_matching_convtransp(dimension=3))
+    print("Get matching dropout", get_matching_dropout(dimension=3))
+    print("Get network config", get_default_network_config(dimension=3, nonlin="LeakyReLU", norm_type="bn"))
 

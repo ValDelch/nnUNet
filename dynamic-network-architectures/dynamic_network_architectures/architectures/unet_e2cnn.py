@@ -3,7 +3,7 @@ from typing import Tuple, List, Union, Type
 import numpy as np
 import torch
 from torch import nn as torch_nn
-from e2cnn import nn as e2_nn
+from escnn import nn as e2_nn
 
 from dynamic_network_architectures.building_blocks.plain_conv_encoder_e2cnn import PlainConvEncoder
 from dynamic_network_architectures.building_blocks.unet_decoder_e2cnn import UNetDecoder
@@ -64,15 +64,26 @@ class PlainConvUNet(torch_nn.Module):
 
 if __name__ == '__main__':
 
-    from e2cnn import gspaces
+    from escnn import gspaces
 
-    # Test
+    # Test 2D
 
     data = torch.rand((1, 4, 512, 512))
-    r2_act = gspaces.Rot2dOnR2(N=4)
+    r2_act = gspaces.rot2dOnR2(N=4)
 
     model = PlainConvUNet(r2_act, 4, 6, (8, 16, 63, 64, 128, 128), e2_nn.R2Conv, 5, (1, 2, 2, 2, 2, 2), (2, 2, 2, 2, 2, 2), 4,
                           (2, 2, 2, 2, 2), False, e2_nn.InnerBatchNorm, None, None, None, e2_nn.ReLU, deep_supervision=True)
+
+    print(model.compute_conv_feature_map_size(data.shape[2:], order=4))
+    print([x.shape for x in model(data)])
+
+    # Test 3D
+
+    data = torch.rand((1, 3, 64, 32, 32))
+    r2_act = gspaces.octaOnR3()
+
+    model = PlainConvUNet(r2_act, 3, 4, (8, 16, 63, 64), e2_nn.R3Conv, 5, (1, 2, 2, 2), (2, 2, 2, 2), 4,
+                          (2, 2, 2), False, e2_nn.InnerBatchNorm, None, None, None, e2_nn.ReLU, deep_supervision=True)
 
     print(model.compute_conv_feature_map_size(data.shape[2:], order=4))
     print([x.shape for x in model(data)])

@@ -2,8 +2,8 @@ from dynamic_network_architectures.architectures.unet_for_e2cnn import PlainConv
 from dynamic_network_architectures.building_blocks.helper_e2cnn import get_matching_batchnorm, convert_dim_to_conv_op
 from nnunetv2.utilities.plans_handling.plans_handler import ConfigurationManager, PlansManager
 from torch import nn
-from e2cnn import gspaces
-from e2cnn import nn as e2_nn
+from escnn import gspaces
+from escnn import nn as e2_nn
 
 
 def get_network_from_plans(plans_manager: PlansManager,
@@ -49,8 +49,13 @@ def get_network_from_plans(plans_manager: PlansManager,
         'n_conv_per_stage_decoder': configuration_manager.n_conv_per_stage_decoder
     }
     # network class name!!
+    if dim == 2:
+        gspace = gspaces.rot2dOnR2(N=4)
+    elif dim == 3:
+        gspace = gspaces.octaOnR3()
+
     model = network_class(
-        gspaces.Rot2dOnR2(N=4),
+        gspace=gspace,
         input_channels=num_input_channels,
         n_stages=num_stages,
         features_per_stage=[min(configuration_manager.UNet_base_num_features * 2 ** i,
