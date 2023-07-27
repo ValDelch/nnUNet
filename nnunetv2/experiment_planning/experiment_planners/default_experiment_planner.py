@@ -572,7 +572,7 @@ class ExperimentPlannerE2CNN(object):
 
         self.anisotropy_threshold = ANISO_THRESHOLD
 
-        self.UNet_base_num_features = 8
+        self.UNet_base_num_features = 4
         self.UNet_class = PlainConvUNet_e2cnn
         self.order = 4
         # the following two numbers are really arbitrary and were set to reproduce nnU-Net v1's configurations as
@@ -585,8 +585,8 @@ class ExperimentPlannerE2CNN(object):
         self.UNet_reference_val_corresp_bs_3d = 2
         self.UNet_vram_target_GB = gpu_memory_target_in_gb
         self.UNet_featuremap_min_edge_length = 4
-        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2, 2)
-        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2)
         self.UNet_min_batch_size = 2
         self.UNet_max_features_2d = 128
         self.UNet_max_features_3d = 64
@@ -636,7 +636,7 @@ class ExperimentPlannerE2CNN(object):
                          n_stages,
                          features_per_stage,
                          conv_op,
-                         7,
+                         3,
                          strides,
                          blocks_per_stage_encoder,
                          num_labels,
