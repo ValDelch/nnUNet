@@ -574,7 +574,6 @@ class ExperimentPlannerE2CNN(object):
 
         self.UNet_base_num_features = 8
         self.UNet_class = PlainConvUNet_e2cnn
-        self.gspace = gspaces.Rot2dOnR2(N=4)
         self.order = 4
         # the following two numbers are really arbitrary and were set to reproduce nnU-Net v1's configurations as
         # much as possible
@@ -797,6 +796,12 @@ class ExperimentPlannerE2CNN(object):
 
         # now estimate vram consumption
         num_stages = len(pool_op_kernel_sizes)
+        
+        if len(spacing) == 3:
+            self.gspace = gspaces.octaOnR3()
+        elif len(spacing) == 2:
+            self.gspace = gspaces.rot2dOnR2(N=4)
+
         estimate = self.static_estimate_VRAM_usage(tuple(patch_size),
                                                    self.gspace,
                                                    self.order,
