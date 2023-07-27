@@ -585,8 +585,8 @@ class ExperimentPlannerE2CNN(object):
         self.UNet_reference_val_corresp_bs_3d = 2
         self.UNet_vram_target_GB = gpu_memory_target_in_gb
         self.UNet_featuremap_min_edge_length = 4
-        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
-        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_encoder = (2, 2, 2, 2, 2, 2, 2, 2)
+        self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2, 2)
         self.UNet_min_batch_size = 2
         self.UNet_max_features_2d = 128
         self.UNet_max_features_3d = 64
@@ -636,7 +636,7 @@ class ExperimentPlannerE2CNN(object):
                          n_stages,
                          features_per_stage,
                          conv_op,
-                         5,
+                         7,
                          strides,
                          blocks_per_stage_encoder,
                          num_labels,
@@ -796,7 +796,7 @@ class ExperimentPlannerE2CNN(object):
 
         # now estimate vram consumption
         num_stages = len(pool_op_kernel_sizes)
-        
+
         if len(spacing) == 3:
             self.gspace = gspaces.octaOnR3()
         elif len(spacing) == 2:
