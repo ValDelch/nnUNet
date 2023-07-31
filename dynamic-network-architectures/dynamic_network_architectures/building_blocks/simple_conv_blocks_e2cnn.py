@@ -129,10 +129,9 @@ class ConvDropoutNormReLU(e2_nn.EquivariantModule):
                 self.norm = e2_nn.IIDBatchNorm3d(out_type, **norm_op_kwargs)
                 ops.append(self.norm)
 
-            #if nonlin is not None:
-            #    so3: e2_nn.groups.SO3 = self.in_type.fibergroup
-            #    self.nonlin = e2_nn.FourierELU(self.gspace, output_channels, irreps=so3.bl_irreps(2), inplace=True, type='thomson_cube', N=4)
-            #    ops.append(self.nonlin)
+            if nonlin is not None:
+                self.nonlin = e2_nn.NormNonLinearity(out_type)
+                ops.append(self.nonlin)
 
         self.all_modules = e2_nn.SequentialModule(*ops)
 
