@@ -572,12 +572,12 @@ class ExperimentPlannerE2CNN(object):
 
         self.anisotropy_threshold = ANISO_THRESHOLD
 
-        self.UNet_base_num_features = 4
+        self.UNet_base_num_features = 2
         self.UNet_class = PlainConvUNet_e2cnn
         self.order = 4
         # the following two numbers are really arbitrary and were set to reproduce nnU-Net v1's configurations as
         # much as possible
-        self.UNet_reference_val_3d = 560000000*6  # 455600128  550000000
+        self.UNet_reference_val_3d = 560000000*8  # 455600128  550000000
         self.UNet_reference_val_2d = 85000000*2.5  # 83252480
         self.UNet_reference_com_nfeatures = 32
         self.UNet_reference_val_corresp_GB = 8
@@ -589,7 +589,7 @@ class ExperimentPlannerE2CNN(object):
         self.UNet_blocks_per_stage_decoder = (2, 2, 2, 2, 2, 2)
         self.UNet_min_batch_size = 2
         self.UNet_max_features_2d = 128
-        self.UNet_max_features_3d = 64
+        self.UNet_max_features_3d = 32
 
         self.lowres_creation_threshold = 0.25  # if the patch size of fullres is less than 25% of the voxels in the
         # median shape then we need a lowres config as well
