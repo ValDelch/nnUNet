@@ -574,10 +574,10 @@ class ExperimentPlannerE2CNN(object):
 
         self.UNet_base_num_features = 2
         self.UNet_class = PlainConvUNet_e2cnn
-        self.order = 4
+        self.order = 2
         # the following two numbers are really arbitrary and were set to reproduce nnU-Net v1's configurations as
         # much as possible
-        self.UNet_reference_val_3d = 560000000*8  # 455600128  550000000
+        self.UNet_reference_val_3d = 560000000*10  # 455600128  550000000
         self.UNet_reference_val_2d = 85000000*2.5  # 83252480
         self.UNet_reference_com_nfeatures = 32
         self.UNet_reference_val_corresp_GB = 8
