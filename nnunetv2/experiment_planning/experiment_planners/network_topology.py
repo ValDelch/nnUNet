@@ -160,7 +160,7 @@ def get_pool_and_conv_props_e2cnn(spacing, patch_size, min_feature_map_size, max
         #        if spacings_of_axes[d] / min(current_spacing) < 2:
         #            kernel_size[d] = 3
         # For E2CNN, we always use 7x7 conv
-        kernel_size = [3]*dim
+        kernel_size = [5]*dim
 
         other_axes = [i for i in range(dim) if i not in valid_axes_for_pool]
 
@@ -181,5 +181,5 @@ def get_pool_and_conv_props_e2cnn(spacing, patch_size, min_feature_map_size, max
     patch_size = pad_shape(patch_size, must_be_divisible_by)
 
     # we need to add one more conv_kernel_size for the bottleneck. We always use 5x5 conv here for E2CNN
-    conv_kernel_sizes.append([3]*dim)
+    conv_kernel_sizes.append([5]*dim)
     return num_pool_per_axis, pool_op_kernel_sizes, conv_kernel_sizes, patch_size, must_be_divisible_by

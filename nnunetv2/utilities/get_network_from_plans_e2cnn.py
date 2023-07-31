@@ -52,7 +52,7 @@ def get_network_from_plans(plans_manager: PlansManager,
     if dim == 2:
         gspace = gspaces.rot2dOnR2(N=4)
     elif dim == 3:
-        gspace = gspaces.octaOnR3()
+        gspace = gspaces.rot3dOnR3()
 
     model = network_class(
         gspace=gspace,

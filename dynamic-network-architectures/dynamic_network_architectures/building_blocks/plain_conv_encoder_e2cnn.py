@@ -158,14 +158,15 @@ if __name__ == '__main__':
     input_channels = 3
     data = torch.rand(1, input_channels, 128, 64, 64)
 
-    r2_act = gspaces.octaOnR3()
+    #r2_act = gspaces.octaOnR3()
+    r2_act = gspaces.rot3dOnR3()
     in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
 
     model = PlainConvEncoder(
         gspace=r2_act,
         input_channels=input_channels,
         n_stages=4,
-        features_per_stage=16,
+        features_per_stage=8,
         conv_op=e2_nn.R3Conv,
         kernel_sizes=5,
         strides=2,

@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from torch import nn as torch_nn
 from escnn import nn as e2_nn
+from escnn.group import directsum
 
 from dynamic_network_architectures.building_blocks.simple_conv_blocks_e2cnn import ConvertToTensor, ConvDropoutNormReLU, StackedConvBlocks, convert_conv_op_to_dim
 from dynamic_network_architectures.building_blocks.helper_e2cnn import get_matching_convtransp
@@ -61,25 +62,58 @@ class UNetDecoder(e2_nn.EquivariantModule):
                 )
             )
 
-            stages.append(
-                StackedConvBlocks(
-                    num_convs=n_conv_per_stage[s-1],
-                    conv_op=encoder.conv_op,
-                    in_type=e2_nn.FieldType(encoder.gspace, 2*input_features_skip*[encoder.gspace.regular_repr]),
-                    input_channels=2*input_features_skip,
-                    output_channels=input_features_skip,
-                    kernel_size=encoder.kernel_sizes[-(s + 1)],
-                    initial_stride=1,
-                    conv_bias=encoder.conv_bias,
-                    norm_op=encoder.norm_op,
-                    norm_op_kwargs=encoder.norm_op_kwargs,
-                    dropout_op=encoder.dropout_op,
-                    dropout_op_kwargs=encoder.dropout_op_kwargs,
-                    nonlin=encoder.nonlin,
-                    nonlin_kwargs=encoder.nonlin_kwargs,
-                    nonlin_first=nonlin_first
+            if encoder.gspace.dimensionality == 2:
+
+                stages.append(
+                    StackedConvBlocks(
+                        num_convs=n_conv_per_stage[s-1],
+                        conv_op=encoder.conv_op,
+                        in_type=e2_nn.FieldType(encoder.gspace, 2*input_features_skip*[encoder.gspace.regular_repr]),
+                        input_channels=2*input_features_skip,
+                        output_channels=input_features_skip,
+                        kernel_size=encoder.kernel_sizes[-(s + 1)],
+                        initial_stride=1,
+                        conv_bias=encoder.conv_bias,
+                        norm_op=encoder.norm_op,
+                        norm_op_kwargs=encoder.norm_op_kwargs,
+                        dropout_op=encoder.dropout_op,
+                        dropout_op_kwargs=encoder.dropout_op_kwargs,
+                        nonlin=encoder.nonlin,
+                        nonlin_kwargs=encoder.nonlin_kwargs,
+                        nonlin_first=nonlin_first
+                    )
                 )
-            )
+
+            else:
+
+                SO3 = encoder.gspace.fibergroup
+                polinomials = [encoder.gspace.trivial_repr, SO3.irrep(1)]
+                for _ in range(2, 3):
+                    polinomials.append(
+                        polinomials[-1].tensor(SO3.irrep(1))
+                    )
+                out_type = directsum(polinomials, name=f'polynomial_2')
+                out_type = e2_nn.FieldType(encoder.gspace, [out_type] * input_features_skip * 2)
+
+                stages.append(
+                    StackedConvBlocks(
+                        num_convs=n_conv_per_stage[s-1],
+                        conv_op=encoder.conv_op,
+                        in_type=out_type,
+                        input_channels=2*input_features_skip,
+                        output_channels=input_features_skip,
+                        kernel_size=encoder.kernel_sizes[-(s + 1)],
+                        initial_stride=1,
+                        conv_bias=encoder.conv_bias,
+                        norm_op=encoder.norm_op,
+                        norm_op_kwargs=encoder.norm_op_kwargs,
+                        dropout_op=encoder.dropout_op,
+                        dropout_op_kwargs=encoder.dropout_op_kwargs,
+                        nonlin=encoder.nonlin,
+                        nonlin_kwargs=encoder.nonlin_kwargs,
+                        nonlin_first=nonlin_first
+                    )
+                )
 
             if self.dim == 2:
                 seg_layers.append(
@@ -101,7 +135,7 @@ class UNetDecoder(e2_nn.EquivariantModule):
                 seg_layers.append(
                     torch_nn.Sequential(
                         ConvertToTensor(
-                            in_type=e2_nn.FieldType(encoder.gspace, input_features_skip*[encoder.gspace.regular_repr])
+                            in_type=e2_nn.FieldType(encoder.gspace, [directsum(polinomials, name=f'polynomial_2')] * input_features_skip)
                         ),
                         torch_nn.Conv3d(
                             in_channels=input_features_skip,
@@ -211,7 +245,8 @@ if __name__ == '__main__':
     input_channels = 3
     data = torch.rand(1, input_channels, 128, 64, 64)
 
-    r2_act = gspaces.octaOnR3()
+    #r2_act = gspaces.octaOnR3()
+    r2_act = gspaces.rot3dOnR3()
     in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
 
     model = PlainConvEncoder(

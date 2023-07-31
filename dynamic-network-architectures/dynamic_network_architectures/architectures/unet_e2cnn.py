@@ -80,7 +80,8 @@ if __name__ == '__main__':
     # Test 3D
 
     data = torch.rand((1, 3, 64, 32, 32))
-    r2_act = gspaces.octaOnR3()
+    #r2_act = gspaces.octaOnR3()
+    r2_act = gspaces.rot3dOnR3()
 
     model = PlainConvUNet(r2_act, 3, 4, (8, 16, 63, 64), e2_nn.R3Conv, 5, (1, 2, 2, 2), (2, 2, 2, 2), 4,
                           (2, 2, 2), False, e2_nn.InnerBatchNorm, None, None, None, e2_nn.ReLU, deep_supervision=True)

@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from torch import nn as torch_nn
 from escnn import nn as e2_nn
+from escnn.group import directsum
 
 from dynamic_network_architectures.building_blocks.helper_e2cnn import maybe_convert_scalar_to_list, convert_conv_op_to_dim
 
@@ -13,7 +14,19 @@ class ConvertToTensor(e2_nn.EquivariantModule):
                  in_type: Type[e2_nn.FieldType]):
         super(ConvertToTensor, self).__init__()
         self.out_type = in_type
-        self.gpool = e2_nn.GroupPooling(in_type)
+        if self.out_type.gspace.dimensionality == 2:
+            self.gpool = e2_nn.GroupPooling(in_type)
+        #else:
+        #    self.gs = self.out_type.gspace
+        #    ftgpool = e2_nn.QuotientFourierELU(self.gs, (False, -1), 128, 
+        #                                       irreps=self.gs.fibergroup.bl_irreps(2), 
+        #                                       out_irreps=self.gs.fibergroup.bl_irreps(0), 
+        #                                       grid=self.gs.fibergroup.sphere_grid(type='thomson_cube', N=1))
+        #    final_features = ftgpool.in_type
+        #    conv = e2_nn.R3Conv(self.out_type, final_features, kernel_size=3, padding=0, bias=False, initialize=False)
+        #    self.gpool = e2_nn.SequentialModule(conv, ftgpool)
+        else:
+            self.gpool = e2_nn.NormPool(in_type)
 
     def forward(self, x):
         x = self.gpool(x)
@@ -59,34 +72,67 @@ class ConvDropoutNormReLU(e2_nn.EquivariantModule):
 
         ops = []
 
-        # Adding the e2 convolution layer
-        out_type = e2_nn.FieldType(in_type.gspace, output_channels*[in_type.gspace.regular_repr])
-        self.out_type = out_type
-        self.conv = conv_op(
-            in_type=in_type, 
-            out_type=out_type,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=(kernel_size - 1) // 2,
-            dilation=1,
-            bias=conv_bias,
-        )
-        ops.append(self.conv)
+        if self.gspace.dimensionality == 2:
 
-        if dropout_op is not None:
-            self.dropout = dropout_op(out_type, **dropout_op_kwargs)
-            ops.append(self.dropout)
+            # Adding the e2 convolution layer
+            out_type = e2_nn.FieldType(in_type.gspace, output_channels*[in_type.gspace.regular_repr])
+            self.out_type = out_type
+            self.conv = conv_op(
+                in_type=in_type, 
+                out_type=out_type,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=(kernel_size - 1) // 2,
+                dilation=1,
+                bias=conv_bias,
+            )
+            ops.append(self.conv)
 
-        if norm_op is not None:
-            self.norm = norm_op(out_type, **norm_op_kwargs)
-            ops.append(self.norm)
+            if dropout_op is not None:
+                self.dropout = dropout_op(out_type, **dropout_op_kwargs)
+                ops.append(self.dropout)
 
-        if nonlin is not None:
-            self.nonlin = nonlin(out_type, **nonlin_kwargs)
-            ops.append(self.nonlin)
+            if norm_op is not None:
+                self.norm = norm_op(out_type, **norm_op_kwargs)
+                ops.append(self.norm)
 
-        if nonlin_first and (norm_op is not None and nonlin is not None):
-            ops[-1], ops[-2] = ops[-2], ops[-1]
+            if nonlin is not None:
+                self.nonlin = nonlin(out_type, **nonlin_kwargs)
+                ops.append(self.nonlin)
+
+            if nonlin_first and (norm_op is not None and nonlin is not None):
+                ops[-1], ops[-2] = ops[-2], ops[-1]
+
+        else:
+
+            SO3 = self.gspace.fibergroup
+            polinomials = [self.gspace.trivial_repr, SO3.irrep(1)]
+            for _ in range(2, 3):
+                polinomials.append(
+                    polinomials[-1].tensor(SO3.irrep(1))
+                )
+            out_type = directsum(polinomials, name=f'polynomial_2')
+            out_type = e2_nn.FieldType(self.gspace, [out_type] * output_channels)
+            self.out_type = out_type
+
+            ops.append(conv_op(
+                in_type=self.in_type,
+                out_type=out_type,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=(kernel_size - 1) // 2,
+                dilation=1,
+                bias=conv_bias
+            ))
+
+            if norm_op is not None:
+                self.norm = e2_nn.IIDBatchNorm3d(out_type, **norm_op_kwargs)
+                ops.append(self.norm)
+
+            #if nonlin is not None:
+            #    so3: e2_nn.groups.SO3 = self.in_type.fibergroup
+            #    self.nonlin = e2_nn.FourierELU(self.gspace, output_channels, irreps=so3.bl_irreps(2), inplace=True, type='thomson_cube', N=4)
+            #    ops.append(self.nonlin)
 
         self.all_modules = e2_nn.SequentialModule(*ops)
 
@@ -132,42 +178,48 @@ class StackedConvBlocks(e2_nn.EquivariantModule):
         gspace = in_type.gspace
         self.gspace = gspace
 
-        self.convs = torch_nn.Sequential(
-            ConvDropoutNormReLU(
-                conv_op=conv_op,
-                in_type=in_type,
-                input_channels=input_channels,
-                output_channels=output_channels[0],
-                kernel_size=kernel_size,
-                initial_stride=initial_stride,
-                conv_bias=conv_bias,
-                norm_op=norm_op,
-                norm_op_kwargs=norm_op_kwargs,
-                dropout_op=dropout_op,
-                dropout_op_kwargs=dropout_op_kwargs,
-                nonlin=nonlin,
-                nonlin_kwargs=nonlin_kwargs,
-                nonlin_first=nonlin_first
-            ),
-            *[
-                ConvDropoutNormReLU(
-                    conv_op=conv_op,
-                    in_type=e2_nn.FieldType(gspace, output_channels[i-1]*[gspace.regular_repr]),
-                    input_channels=output_channels[i-1],
-                    output_channels=output_channels[i],
-                    kernel_size=kernel_size,
-                    initial_stride=1,
-                    conv_bias=conv_bias,
-                    norm_op=norm_op,
-                    norm_op_kwargs=norm_op_kwargs,
-                    dropout_op=dropout_op,
-                    dropout_op_kwargs=dropout_op_kwargs,
-                    nonlin=nonlin,
-                    nonlin_kwargs=nonlin_kwargs,
-                    nonlin_first=nonlin_first
+        convs = []
+        for i in range(num_convs):
+            if i == 0:
+                convs.append(
+                    ConvDropoutNormReLU(
+                        conv_op=conv_op,
+                        in_type=in_type,
+                        input_channels=input_channels,
+                        output_channels=output_channels[0],
+                        kernel_size=kernel_size,
+                        initial_stride=initial_stride,
+                        conv_bias=conv_bias,
+                        norm_op=norm_op,
+                        norm_op_kwargs=norm_op_kwargs,
+                        dropout_op=dropout_op,
+                        dropout_op_kwargs=dropout_op_kwargs,
+                        nonlin=nonlin,
+                        nonlin_kwargs=nonlin_kwargs,
+                        nonlin_first=nonlin_first
+                    )
                 )
-                for i in range(1, num_convs)
-            ]
+            else:
+                convs.append(
+                    ConvDropoutNormReLU(
+                        conv_op=conv_op,
+                        in_type=convs[i-1].out_type,
+                        input_channels=output_channels[i-1],
+                        output_channels=output_channels[i],
+                        kernel_size=kernel_size,
+                        initial_stride=1,
+                        conv_bias=conv_bias,
+                        norm_op=norm_op,
+                        norm_op_kwargs=norm_op_kwargs,
+                        dropout_op=dropout_op,
+                        dropout_op_kwargs=dropout_op_kwargs,
+                        nonlin=nonlin,
+                        nonlin_kwargs=nonlin_kwargs,
+                        nonlin_first=nonlin_first
+                    )
+                )
+        self.convs = torch_nn.Sequential(
+            *convs
         )
 
         self.output_channels = output_channels[-1]
@@ -252,7 +304,7 @@ if __name__ == '__main__':
     input_channels = 3
     data = torch.rand(1, input_channels, 40, 32, 32)
 
-    r2_act = gspaces.octaOnR3()
+    r2_act = gspaces.rot3dOnR3()
     in_type = e2_nn.FieldType(r2_act, input_channels*[r2_act.trivial_repr])
 
     stx = StackedConvBlocks(
@@ -260,7 +312,7 @@ if __name__ == '__main__':
         conv_op=e2_nn.R3Conv,
         in_type=in_type,
         input_channels=input_channels,
-        output_channels=8,
+        output_channels=4,
         kernel_size=5,
         initial_stride=2,
         conv_bias=True,
@@ -278,12 +330,12 @@ if __name__ == '__main__':
             conv_op=e2_nn.R3Conv,
             in_type=stx.convs[-1].out_type,
             input_channels=stx.output_channels,
-            output_channels=32,
+            output_channels=16,
             kernel_size=(7,7,7),
             initial_stride=1,
             conv_bias=True,
             norm_op=e2_nn.InnerBatchNorm,
-            norm_op_kwargs=None,
+            norm_op_kwargs={'eps': 1e-5, 'affine': True},
             dropout_op=None,
             dropout_op_kwargs=None,
             nonlin=e2_nn.ReLU,
