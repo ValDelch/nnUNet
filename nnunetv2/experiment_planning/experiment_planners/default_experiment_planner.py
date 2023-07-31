@@ -798,7 +798,7 @@ class ExperimentPlannerE2CNN(object):
         num_stages = len(pool_op_kernel_sizes)
 
         if len(spacing) == 3:
-            self.gspace = gspaces.octaOnR3()
+            self.gspace = gspaces.rot3dOnR3()
         elif len(spacing) == 2:
             self.gspace = gspaces.rot2dOnR2(N=4)
 
