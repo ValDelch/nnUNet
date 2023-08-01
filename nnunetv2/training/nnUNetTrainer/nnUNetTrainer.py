@@ -1268,7 +1268,7 @@ class nnUNetTrainer_FL_CE_continue(nnUNetTrainer_FL_CE):
         self.initial_lr = 1e-2 / 3.
 
 
-class nnUNetTrainerE3CNN(object):
+class nnUNetTrainerE3CNN(nnUNetTrainer):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict, unpack_dataset: bool = True,
                  device: torch.device = torch.device('cuda')):
         # From https://grugbrain.dev/. Worth a read ya big brains ;-)
