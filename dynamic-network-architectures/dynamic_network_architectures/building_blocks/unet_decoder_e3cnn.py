@@ -63,7 +63,7 @@ class UNetDecoder(nn.Module):
             # input features to conv is 2x input_features_skip (concat input_features_skip with transpconv output)
             input_irreps = convs[-1].gate.irreps_out + encoder.stages[-(s + 1)][-1].irreps_out
             stages.append(StackedConvBlocks(
-                n_conv_per_stage[s-1], "SO3", 5, (1,1,1), input_irreps, 2*input_features_skip,
+                n_conv_per_stage[s-1], "SO3", 5, (1,1,1), input_irreps, input_features_skip,
                 encoder.kernel_sizes[-(s + 1)], 1, True, encoder.conv_bias, encoder.norm_op, encoder.norm_op_kwargs,
                 encoder.dropout_op, encoder.dropout_op_kwargs, encoder.nonlin, encoder.nonlin_kwargs, nonlin_first
             ))
@@ -71,7 +71,7 @@ class UNetDecoder(nn.Module):
             # we always build the deep supervision outputs so that we can always load parameters. If we don't do this
             # then a model trained with deep_supervision=True could not easily be loaded at inference time where
             # deep supervision is not needed. It's just a convenience thing
-            out_layer = Linear(stages[-1].irreps_out, str(2*input_features_skip*7)+"x0e")
+            out_layer = Linear(stages[-1].irreps_out, str(input_features_skip*7)+"x0e")
             outout_layer =  nn.Conv3d(
                             in_channels=2*input_features_skip*7,
                             out_channels=num_classes,
