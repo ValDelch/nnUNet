@@ -44,7 +44,8 @@ class UNetDecoder(nn.Module):
         stages = []
         transpconvs = []
         convs = []
-        seg_layers = []
+        seg_layers_1 = []
+        seg_layers_2 = []
         for s in range(1, n_stages_encoder):
             input_features_below = encoder.output_channels[-s]
             input_features_skip = encoder.output_channels[-(s + 1)]
@@ -70,13 +71,23 @@ class UNetDecoder(nn.Module):
             # we always build the deep supervision outputs so that we can always load parameters. If we don't do this
             # then a model trained with deep_supervision=True could not easily be loaded at inference time where
             # deep supervision is not needed. It's just a convenience thing
-            out_layer = Linear(stages[-1].irreps_out, str(num_classes)+"x0e")
-            seg_layers.append(out_layer)
+            out_layer = Linear(stages[-1].irreps_out, str(2*input_features_skip*7)+"x0e")
+            outout_layer =  nn.Conv3d(
+                            in_channels=2*input_features_skip*7,
+                            out_channels=num_classes,
+                            kernel_size=1,
+                            stride=1,
+                            padding=0,
+                            bias=True
+                        )
+            seg_layers_1.append(out_layer)
+            seg_layers_2.append(outout_layer)
 
         self.stages = nn.ModuleList(stages)
         self.transpconvs = nn.ModuleList(transpconvs)
         self.convs = nn.ModuleList(convs)
-        self.seg_layers = nn.ModuleList(seg_layers)
+        self.seg_layers_1 = nn.ModuleList(seg_layers_1)
+        self.seg_layers_2 = nn.ModuleList(seg_layers_2)
 
     def forward(self, skips):
         """
@@ -92,9 +103,11 @@ class UNetDecoder(nn.Module):
             x = torch.cat((x, skips[-(s+2)]), dim=1)
             x = self.stages[s](x)
             if self.deep_supervision:
-                seg_outputs.append(self.seg_layers[s](x.transpose(1, 4)).transpose(1, 4))
+                y = self.seg_layers_1[s](x.transpose(1, 4)).transpose(1, 4)
+                seg_outputs.append(self.seg_layers_2[s](y))
             elif s == (len(self.stages) - 1):
-                seg_outputs.append(self.seg_layers[-1](x.transpose(1, 4)).transpose(1, 4))
+                y = self.seg_layers_1[-1](x.transpose(1, 4)).transpose(1, 4)
+                seg_outputs.append(self.seg_layers_2[-1](y))
             lres_input = x
 
         # invert seg outputs so that the largest segmentation prediction is returned first
