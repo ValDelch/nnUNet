@@ -43,7 +43,7 @@ class UNetDecoder(nn.Module):
         # we start with the bottleneck and work out way up
         stages = []
         transpconvs = []
-        #convs = []
+        convs = []
         seg_layers = []
         for s in range(1, n_stages_encoder):
             input_features_below = encoder.output_channels[-s]
@@ -54,13 +54,13 @@ class UNetDecoder(nn.Module):
                 input_transpconv = stages[-1].irreps_out
             stride_for_transpconv = encoder.strides[-s]
             transpconvs.append(nn.Upsample(scale_factor=stride_for_transpconv, mode='trilinear', align_corners=True))
-            #convs.append(ConvDropoutNormReLU(
-            #    "SO3", 5, (1,1,1), input_transpconv, input_features_skip, 5, 1, True, encoder.conv_bias, 
-            #    encoder.norm_op, encoder.norm_op_kwargs, encoder.dropout_op, encoder.dropout_op_kwargs, 
-            #    encoder.nonlin, encoder.nonlin_kwargs, nonlin_first)
-            #)
+            convs.append(ConvDropoutNormReLU(
+                "SO3", 5, (1,1,1), input_transpconv, input_features_skip, 5, 1, True, encoder.conv_bias, 
+                encoder.norm_op, encoder.norm_op_kwargs, encoder.dropout_op, encoder.dropout_op_kwargs, 
+                encoder.nonlin, encoder.nonlin_kwargs, nonlin_first)
+            )
             # input features to conv is 2x input_features_skip (concat input_features_skip with transpconv output)
-            input_irreps = input_transpconv + encoder.stages[-(s + 1)][-1].irreps_out
+            input_irreps = convs[-1].gate.irreps_out + encoder.stages[-(s + 1)][-1].irreps_out
             stages.append(StackedConvBlocks(
                 n_conv_per_stage[s-1], "SO3", 5, (1,1,1), input_irreps, 2*input_features_skip,
                 encoder.kernel_sizes[-(s + 1)], 1, True, encoder.conv_bias, encoder.norm_op, encoder.norm_op_kwargs,
@@ -75,7 +75,7 @@ class UNetDecoder(nn.Module):
 
         self.stages = nn.ModuleList(stages)
         self.transpconvs = nn.ModuleList(transpconvs)
-        #self.convs = nn.ModuleList(convs)
+        self.convs = nn.ModuleList(convs)
         self.seg_layers = nn.ModuleList(seg_layers)
 
     def forward(self, skips):
@@ -88,7 +88,7 @@ class UNetDecoder(nn.Module):
         seg_outputs = []
         for s in range(len(self.stages)):
             x = self.transpconvs[s](lres_input)
-            #x = self.convs[s](x)
+            x = self.convs[s](x)
             x = torch.cat((x, skips[-(s+2)]), dim=1)
             x = self.stages[s](x)
             if self.deep_supervision:
